@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-config.dtd">
+<!-- 部门DeptMapper 配置文件 -->
+<mapper namespace="com.boco.eoms.system.dept.dao.DeptMapper">
+	<!-- 根据deptid查询deptname -->
+	<select id="getDeptNameByDeptId"  parameterType="string" resultType="string">
+		select dept_name from nrmdb.TAI_DEPTINFO where DEPT_ID=#{deptId}
+	</select>
+	
+	<!-- 根据parentDictId获取dictInfo  JK 监控-->
+	<select id="getDeptByParentDeptId" parameterType="string" resultType="java.util.HashMap">
+		select dept_id as "DICTID",dept_name as "DICTNAME" from nrmdb.TAI_DEPTINFO where PARENT_DEPT_ID=#{parentDictId}
+	</select>
+</mapper>

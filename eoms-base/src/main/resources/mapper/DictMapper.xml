@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-config.dtd">
+<!-- 字典DictMapper 配置文件 -->
+<mapper namespace="com.boco.eoms.system.dict.dao.DictMapper">
+	<!-- 根据dictid查询dictname eoms-->
+	<select id="getDictNameByDictId"  parameterType="string" resultType="string">
+		select dictname from taw_system_dict where dictid=#{dictId}
+	</select>
+	
+	<!-- 根据dictid查询dictname JK-->
+	<select id="getDictNameFromJK"  parameterType="string" resultType="string">
+		select type_name from nrmdb.taw_type2string where type_id=#{dictId} and catagory_id=#{parentDictId}
+	</select>
+	
+	<!-- 根据dictid查询dictname alarm-->
+	<select id="getDictNameFromAlarm"  parameterType="string" resultType="string">
+		select txt from nmosdb.tia_alarm_dict where id=#{dictId} and type =#{parentDictId}  and valid = 1
+	</select>
+	
+	<!-- 根据dictid查询dictname Vendor-->
+	<select id="getDictNameFromVendor"  parameterType="string" resultType="string">
+		select zh_name txt from nmosdb.vendor_name where type &gt;= #{parentDictId}  and type=#{dictId} order by zh_name
+	</select>
+	
+	<!-- 根据dictid查询dictname Vendor-->
+	<select id="getDictNameFromStation"  parameterType="string" resultType="string">
+		select userlabel  from nrmdb.station where  int_id=to_char(${dictId})
+	</select>
+	
+	<!-- 根据parentDictId获取dictInfo  eoms-->
+	<select id="getDictInfoByParentDictId" parameterType="string" resultType="java.util.HashMap">
+		select id,dictid,dictname,parentdictid from taw_system_dict where parentDictId=#{parentDictId}
+	</select>
+	
+	<!-- 根据parentDictId获取dictInfo  JK 监控-->
+	<select id="getDictInfoByParentDictIdFormJK" parameterType="string" resultType="java.util.HashMap">
+		select type_id as "ID",type_id as "DICTID",type_name as "DICTNAME",catagory_id as "PARENTDICTID" from nrmdb.taw_type2string where catagory_id=#{parentDictId}
+	</select>
+	
+	<!-- 根据parentDictId获取dictInfo  alarm 告警-->
+	<select id="getDictInfoByParentDictIdFromAlarm" parameterType="string" resultType="java.util.HashMap">
+		select id as "DICTID",txt as "DICTNAME" from nmosdb.tia_alarm_dict where type =#{parentDictId}  and valid = 1
+	</select>
+	
+	<!-- 根据parentDictId获取dictInfo  vendor 监控厂家-->
+	<select id="getDictInfoByParentDictIdFromVendor" parameterType="string" resultType="java.util.HashMap">
+		select type as "DICTID",zh_name as "DICTNAME" from nmosdb.vendor_name where type &gt;= #{parentDictId} order by zh_name
+	</select>
+	
+	<!-- 根据parentDictId获取dictInfo  vendor 监控台站-->
+	<select id="getDictInfoByParentDictIdFromStation" parameterType="string" resultType="java.util.HashMap">
+		select to_char(int_id)  as "DICTID" ,userlabel  as "DICTNAME"  from nrmdb.station where  subcenter_id=#{parentDictId}
+	</select>
+	
+	<!-- 根据parentDictId获取dictInfo  Tenance 监控维护部-->
+	<select id="getDictInfoByParentDictIdFromTenance" parameterType="string" resultType="java.util.HashMap">
+		select dept_id as "DICTID",dept_name as "DICTNAME" from nrmdb.tai_deptinfo where parent_dept_id=#{parentDictId} and  dept_level is not null
+	</select>
+	
+	<!-- 根据字典标识查询字典集合 -->
+	<select id="getDictIdByTableInfo" parameterType="string" resultType="java.util.HashMap">
+		SELECT ID DICTID,${dictKey} DICTNAME FROM( 
+			SELECT ROW_NUMBER() OVER( 
+				PARTITION BY ${dictKey} ORDER BY ID DESC) rn, a.*
+			FROM ${tableName} a) 
+			WHERE rn = 1 ${sql}
+	</select>
+	
+</mapper>

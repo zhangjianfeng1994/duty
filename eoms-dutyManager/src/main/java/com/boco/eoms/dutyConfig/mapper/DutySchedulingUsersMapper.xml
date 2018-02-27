@@ -1,0 +1,299 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.boco.eoms.dutyConfig.dao.DutySchedulingUsersMapper" >
+  <resultMap id="BaseResultMap" type="com.boco.eoms.dutyConfig.model.DutySchedulingUsers" >
+    <id column="DUTY_ID" property="dutyId" jdbcType="INTEGER" />
+    <result column="USERID" property="userid" jdbcType="VARCHAR" />
+    <result column="USERNAME" property="username" jdbcType="VARCHAR" />
+    <result column="DUTY_FLIGHT_ID" property="dutyFlightId" jdbcType="INTEGER" />
+    <result column="DUTY_CONFIG_ID" property="dutyConfigId" jdbcType="INTEGER" />
+    <result column="SCHEDULING_ID" property="schedulingId" jdbcType="INTEGER" />
+    <result column="DELETE_IF" property="deleteIf" jdbcType="INTEGER" />
+    <result column="REASON" property="reason" jdbcType="VARCHAR" />
+    <result column="DUTY_TIME" property="dutyTime" jdbcType="TIMESTAMP" />
+    <result column="HEAD_IF" property="headIf" jdbcType="INTEGER" />
+    <result column="DUTY_HANDOVER_TYPE" property="dutyHandoverType" jdbcType="VARCHAR" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    DUTY_ID, USERID, USERNAME, DUTY_FLIGHT_ID, DUTY_CONFIG_ID, SCHEDULING_ID, DELETE_IF, 
+    REASON, DUTY_TIME, HEAD_IF, DUTY_HANDOVER_TYPE
+  </sql>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    select 
+    <include refid="Base_Column_List" />
+    from DUTY_SCHEDULING_USERS
+    where DUTY_ID = #{dutyId,jdbcType=INTEGER}
+  </select>
+  
+  <select id="getDutySchedulingUserByConfigIdFlightIdDutyTime" resultMap="BaseResultMap" parameterType="java.util.Map" >
+    select * from DUTY_SCHEDULING_USERS
+    where DUTY_FLIGHT_ID = #{dutyflightid,jdbcType=INTEGER} and DUTY_CONFIG_ID = #{dutyconfigid,jdbcType=INTEGER} and DUTY_TIME = #{dutytime,jdbcType=TIMESTAMP} order by head_if desc
+  </select>
+  
+  <select id="selectByUseridandDutyTime" resultMap="BaseResultMap" parameterType="java.util.Map" >
+    select 
+    <include refid="Base_Column_List" />
+    from DUTY_SCHEDULING_USERS
+    where USERID = #{userid,jdbcType=VARCHAR} and DUTY_CONFIG_ID = #{dutyconfigid,jdbcType=INTEGER}
+     and DUTY_TIME = #{dutytime,jdbcType=TIMESTAMP}  order by DUTY_FLIGHT_ID desc
+  </select>
+  
+  
+   <select id="selectNowDutyByduty" resultType="java.util.Map" parameterType="java.util.Map" >
+    select listagg(userid,',') within GROUP(order by DUTY_TIME,DUTY_FLIGHT_ID,head_if) over (partition by DUTY_CONFIG_ID,DUTY_TIME,DUTY_FLIGHT_ID) userids,
+    	   listagg(username,',') within GROUP(order by DUTY_TIME,DUTY_FLIGHT_ID,head_if) over (partition by DUTY_CONFIG_ID,DUTY_TIME,DUTY_FLIGHT_ID) usernames,
+    	   DUTY_FLIGHT_ID,DUTY_CONFIG_ID,DUTY_TIME
+     from
+ 	(select * from DUTY_SCHEDULING_USERS  
+ 		where  DUTY_CONFIG_ID=#{dutyconfigid,jdbcType=INTEGER}
+ 		 and  DUTY_TIME = #{dutytime,jdbcType=TIMESTAMP}  
+ 		 and DUTY_FLIGHT_ID = #{dutyflightid,jdbcType=INTEGER}
+ 		order by DUTY_TIME,DUTY_FLIGHT_ID,head_if)
+  </select>
+  
+   <select id="selectLastDutyByduty" resultType="java.util.Map" parameterType="java.util.Map" >
+    select   userids as last_duty_userid ,usernames as last_duty_username,DUTY_FLIGHT_ID,DUTY_TIME,DUTY_CONFIG_ID    from     
+    (select  rownum num,a.* from (
+	  select  distinct 
+	  listagg(userid, ',') within GROUP(order by DUTY_TIME, DUTY_FLIGHT_ID, head_if) over (partition by DUTY_CONFIG_ID,DUTY_TIME,DUTY_FLIGHT_ID) userids,
+      listagg(username, ',') within GROUP(order by DUTY_TIME, DUTY_FLIGHT_ID, head_if) over (partition by DUTY_CONFIG_ID,DUTY_TIME,DUTY_FLIGHT_ID) usernames,
+       DUTY_FLIGHT_ID,
+       DUTY_CONFIG_ID,
+       DUTY_TIME
+	 from DUTY_SCHEDULING_USERS
+	where DUTY_CONFIG_ID = #{dutyconfigid,jdbcType=INTEGER} order by DUTY_TIME, DUTY_FLIGHT_ID) a)     
+	where num = 
+	(    select num-1 as lastnum  from   ( select  rownum num,a.* from (
+	select  distinct 
+	listagg(userid, ',') within GROUP(order by DUTY_TIME, DUTY_FLIGHT_ID, head_if) over (partition by DUTY_CONFIG_ID,DUTY_TIME,DUTY_FLIGHT_ID) userids,
+    listagg(username, ',') within GROUP(order by DUTY_TIME, DUTY_FLIGHT_ID, head_if) over (partition by DUTY_CONFIG_ID,DUTY_TIME,DUTY_FLIGHT_ID) usernames,
+     DUTY_FLIGHT_ID,
+     DUTY_CONFIG_ID,
+     DUTY_TIME
+	from DUTY_SCHEDULING_USERS
+	where DUTY_CONFIG_ID = #{dutyconfigid,jdbcType=INTEGER} order by DUTY_TIME, DUTY_FLIGHT_ID) a) 
+	where DUTY_TIME = #{dutytime,jdbcType=TIMESTAMP}  and DUTY_FLIGHT_ID = #{dutyflightid,jdbcType=INTEGER} 
+	)
+  </select>
+  
+   <select id="selectNextDutyByduty" resultType="java.util.Map" parameterType="java.util.Map" >
+    select   userids as next_duty_userid ,usernames as next_duty_username,DUTY_FLIGHT_ID,DUTY_TIME,DUTY_CONFIG_ID    from     
+    (select  rownum num,a.* from (
+	  select  distinct 
+	  listagg(userid, ',') within GROUP(order by DUTY_TIME, DUTY_FLIGHT_ID, head_if) over (partition by DUTY_CONFIG_ID,DUTY_TIME,DUTY_FLIGHT_ID) userids,
+      listagg(username, ',') within GROUP(order by DUTY_TIME, DUTY_FLIGHT_ID, head_if) over (partition by DUTY_CONFIG_ID,DUTY_TIME,DUTY_FLIGHT_ID) usernames,
+       DUTY_FLIGHT_ID,
+       DUTY_CONFIG_ID,
+       DUTY_TIME
+	 from DUTY_SCHEDULING_USERS
+	where DUTY_CONFIG_ID = #{dutyconfigid,jdbcType=INTEGER} order by DUTY_TIME, DUTY_FLIGHT_ID) a)     
+	where num = 
+	(    select num+1 as lastnum  from   ( select  rownum num,a.* from (
+	select  distinct 
+	listagg(userid, ',') within GROUP(order by DUTY_TIME, DUTY_FLIGHT_ID, head_if) over (partition by DUTY_CONFIG_ID,DUTY_TIME,DUTY_FLIGHT_ID) userids,
+    listagg(username, ',') within GROUP(order by DUTY_TIME, DUTY_FLIGHT_ID, head_if) over (partition by DUTY_CONFIG_ID,DUTY_TIME,DUTY_FLIGHT_ID) usernames,
+     DUTY_FLIGHT_ID,
+     DUTY_CONFIG_ID,
+     DUTY_TIME
+	from DUTY_SCHEDULING_USERS
+	where DUTY_CONFIG_ID = #{dutyconfigid,jdbcType=INTEGER} order by DUTY_TIME, DUTY_FLIGHT_ID) a) 
+	where DUTY_TIME = #{dutytime,jdbcType=TIMESTAMP}  and DUTY_FLIGHT_ID = #{dutyflightid,jdbcType=INTEGER} 
+	)
+  </select>
+  
+  <select id="selectAllByConfigIdAndTime" resultType="java.util.Map" parameterType="java.util.Map" >
+  	select * from DUTY_SCHEDULING_USERS  
+ 		where  DUTY_CONFIG_ID=#{dutyconfigid,jdbcType=INTEGER}
+ 		 and  DUTY_TIME &gt;= #{startTime,jdbcType=TIMESTAMP}  
+ 		 and  DUTY_TIME &lt;= #{endTime,jdbcType=TIMESTAMP}
+ 		 order by DUTY_TIME,DUTY_FLIGHT_ID,head_if
+  </select>
+  
+    <delete id="deleteByByConfigIdAndTime" parameterType="java.util.Map" >
+    delete from DUTY_SCHEDULING_USERS
+    where  DUTY_CONFIG_ID=#{dutyconfigid,jdbcType=INTEGER}
+ 		 and  DUTY_TIME &gt;= #{startTime,jdbcType=TIMESTAMP}  
+ 		 and  DUTY_TIME &lt;= #{endTime,jdbcType=TIMESTAMP}
+  </delete>
+  
+  <delete id="deleteByPrimaryKeys" parameterType="com.boco.eoms.dutyConfig.model.DutySchedulingUsers" >
+    delete from DUTY_SCHEDULING_USERS
+    where DUTY_TIME = #{dutyTime,jdbcType=TIMESTAMP} and 
+    DUTY_FLIGHT_ID = #{dutyFlightId,jdbcType=INTEGER} and 
+    DUTY_CONFIG_ID = #{dutyConfigId,jdbcType=INTEGER}
+  </delete>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from DUTY_SCHEDULING_USERS
+    where DUTY_ID = #{dutyId,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.boco.eoms.dutyConfig.model.DutySchedulingUsers" >
+    insert into DUTY_SCHEDULING_USERS (DUTY_ID, USERID, USERNAME, 
+      DUTY_FLIGHT_ID, DUTY_CONFIG_ID, SCHEDULING_ID, 
+      DELETE_IF, REASON, DUTY_TIME, 
+      HEAD_IF, DUTY_HANDOVER_TYPE)
+    values (#{dutyId,jdbcType=INTEGER}, #{userid,jdbcType=VARCHAR}, #{username,jdbcType=VARCHAR}, 
+      #{dutyFlightId,jdbcType=INTEGER}, #{dutyConfigId,jdbcType=INTEGER}, #{schedulingId,jdbcType=INTEGER}, 
+      #{deleteIf,jdbcType=INTEGER}, #{reason,jdbcType=VARCHAR}, #{dutyTime,jdbcType=TIMESTAMP}, 
+      #{headIf,jdbcType=INTEGER}, #{dutyHandoverType,jdbcType=VARCHAR})
+  </insert>
+  <insert id="insertSelective" parameterType="com.boco.eoms.dutyConfig.model.DutySchedulingUsers" >
+    <selectKey resultType="java.lang.Integer" keyProperty="dutyId" order="BEFORE">
+    	SELECT duty_scheduling_users_seq.NEXTVAL FROM DUAL
+    </selectKey>
+    insert into DUTY_SCHEDULING_USERS
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="dutyId != null" >
+        DUTY_ID,
+      </if>
+      <if test="userid != null" >
+        USERID,
+      </if>
+      <if test="username != null" >
+        USERNAME,
+      </if>
+      <if test="dutyFlightId != null" >
+        DUTY_FLIGHT_ID,
+      </if>
+      <if test="dutyConfigId != null" >
+        DUTY_CONFIG_ID,
+      </if>
+      <if test="schedulingId != null" >
+        SCHEDULING_ID,
+      </if>
+      <if test="deleteIf != null" >
+        DELETE_IF,
+      </if>
+      <if test="reason != null" >
+        REASON,
+      </if>
+      <if test="dutyTime != null" >
+        DUTY_TIME,
+      </if>
+      <if test="headIf != null" >
+        HEAD_IF,
+      </if>
+      <if test="dutyHandoverType != null" >
+        DUTY_HANDOVER_TYPE,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="dutyId != null" >
+        #{dutyId,jdbcType=INTEGER},
+      </if>
+      <if test="userid != null" >
+        #{userid,jdbcType=VARCHAR},
+      </if>
+      <if test="username != null" >
+        #{username,jdbcType=VARCHAR},
+      </if>
+      <if test="dutyFlightId != null" >
+        #{dutyFlightId,jdbcType=INTEGER},
+      </if>
+      <if test="dutyConfigId != null" >
+        #{dutyConfigId,jdbcType=INTEGER},
+      </if>
+      <if test="schedulingId != null" >
+        #{schedulingId,jdbcType=INTEGER},
+      </if>
+      <if test="deleteIf != null" >
+        #{deleteIf,jdbcType=INTEGER},
+      </if>
+      <if test="reason != null" >
+        #{reason,jdbcType=VARCHAR},
+      </if>
+      <if test="dutyTime != null" >
+        #{dutyTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="headIf != null" >
+        #{headIf,jdbcType=INTEGER},
+      </if>
+      <if test="dutyHandoverType != null" >
+        #{dutyHandoverType,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+    <insert id="insertBatch" parameterType="java.util.List" >
+    insert into DUTY_SCHEDULING_USERS(
+       DUTY_ID,USERID,USERNAME,
+       DUTY_FLIGHT_ID,DUTY_CONFIG_ID,SCHEDULING_ID,
+       DELETE_IF,REASON,DUTY_TIME,HEAD_IF,
+       DUTY_HANDOVER_TYPE,REMARK
+      )
+    Select    
+       duty_scheduling_users_seq.NEXTVAL,A.*  
+                From (  
+                     <foreach collection="list" item="item" index="index" separator="union all">   
+                     (   
+                          Select   
+                           #{item.userid,jdbcType=VARCHAR},
+                           #{item.username,jdbcType=VARCHAR},
+                           #{item.dutyflightid,jdbcType=INTEGER},
+                           #{item.dutyconfigid,jdbcType=INTEGER},
+                           #{item.schedulingid,jdbcType=INTEGER},
+                           #{item.deleteif,jdbcType=INTEGER},
+                           #{item.reason,jdbcType=VARCHAR},
+                           #{item.dutytime,jdbcType=TIMESTAMP},
+                           #{item.headif,jdbcType=INTEGER},
+                           #{item.dutyhandovertype,jdbcType=VARCHAR},
+    					   #{item.remark,jdbcType=VARCHAR}
+                          From dual   
+                       )   
+                      </foreach>  
+                )  A
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.boco.eoms.dutyConfig.model.DutySchedulingUsers" >
+    update DUTY_SCHEDULING_USERS
+    <set >
+      <if test="userid != null" >
+        USERID = #{userid,jdbcType=VARCHAR},
+      </if>
+      <if test="username != null" >
+        USERNAME = #{username,jdbcType=VARCHAR},
+      </if>
+      <if test="dutyFlightId != null" >
+        DUTY_FLIGHT_ID = #{dutyFlightId,jdbcType=INTEGER},
+      </if>
+      <if test="dutyConfigId != null" >
+        DUTY_CONFIG_ID = #{dutyConfigId,jdbcType=INTEGER},
+      </if>
+      <if test="schedulingId != null" >
+        SCHEDULING_ID = #{schedulingId,jdbcType=INTEGER},
+      </if>
+      <if test="deleteIf != null" >
+        DELETE_IF = #{deleteIf,jdbcType=INTEGER},
+      </if>
+      <if test="reason != null" >
+        REASON = #{reason,jdbcType=VARCHAR},
+      </if>
+      <if test="dutyTime != null" >
+        DUTY_TIME = #{dutyTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="headIf != null" >
+        HEAD_IF = #{headIf,jdbcType=INTEGER},
+      </if>
+      <if test="dutyHandoverType != null" >
+        DUTY_HANDOVER_TYPE = #{dutyHandoverType,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where DUTY_ID = #{dutyId,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.boco.eoms.dutyConfig.model.DutySchedulingUsers" >
+    update DUTY_SCHEDULING_USERS
+    set USERID = #{userid,jdbcType=VARCHAR},
+      USERNAME = #{username,jdbcType=VARCHAR},
+      DUTY_FLIGHT_ID = #{dutyFlightId,jdbcType=INTEGER},
+      DUTY_CONFIG_ID = #{dutyConfigId,jdbcType=INTEGER},
+      SCHEDULING_ID = #{schedulingId,jdbcType=INTEGER},
+      DELETE_IF = #{deleteIf,jdbcType=INTEGER},
+      REASON = #{reason,jdbcType=VARCHAR},
+      DUTY_TIME = #{dutyTime,jdbcType=TIMESTAMP},
+      HEAD_IF = #{headIf,jdbcType=INTEGER},
+      DUTY_HANDOVER_TYPE = #{dutyHandoverType,jdbcType=VARCHAR}
+    where DUTY_ID = #{dutyId,jdbcType=INTEGER}
+  </update>
+  <sql id="MysqlDialectSuffix" >
+    <if test="pageHelper != null" >
+      <![CDATA[ limit #{pageHelper.begin}, #{pageHelper.length}]]>
+    </if>
+  </sql>
+</mapper>

@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.boco.eoms.system.attachment.dao.AttachmentMapper">
+	<!--通过<resultMap>映射实体类属性名和表的字段名对应关系 -->
+    <resultMap type="com.boco.eoms.system.attachment.model.AttachmentInfo" id="attachmentInfoMap">
+        <!-- 用id属性来映射主键字段 -->
+        <id property="id" column="ID"/>
+        <!-- 用result属性来映射非主键字段 -->
+        <result property="fileName" column="FILENAME"/>
+        <result property="serverFileName" column="SERVER_FILENAME"/>
+        <result property="uploadUserId" column="UPLOAD_USERID"/>
+        <result property="uploadUserName" column="UPLOAD_USERNAME"/>
+        <result property="uploadTime" column="UPLOAD_TIME"/>
+        <result property="moduleType" column="MODULE_TYPE"/>
+        <result property="modelId" column="MODULE_ID"/>
+        <result property="serverIp" column="SERVER_IP"/>
+        <result property="resourcePath" column="RESOURCE_PATH"/>
+    </resultMap>
+	
+	<!-- 查询附件列表信息 -->
+	<select id="queryAttachmentInfoList" resultMap="attachmentInfoMap">
+		SELECT
+			ID,
+			FILENAME,
+			SERVER_FILENAME,
+			UPLOAD_USERID,
+			UPLOAD_USERNAME,
+			UPLOAD_TIME,
+			MODULE_TYPE,
+			MODULE_ID,
+			SERVER_IP,
+			RESOURCE_PATH
+		FROM
+			ATTACHMENT_INFO
+		WHERE
+			1=1 ${condition}
+	</select>
+	
+	<!-- 插入一条附件信息 -->
+	<insert id="insertAttachmentInfo" parameterType="com.boco.eoms.system.attachment.model.AttachmentInfo">
+		<selectKey keyProperty="id" resultType="java.lang.String" order="BEFORE">
+            select sys_guid() from dual
+        </selectKey>
+		insert into ATTACHMENT_INFO 
+		(
+			ID,
+			FILENAME,
+			SERVER_FILENAME,
+			UPLOAD_USERID,
+			UPLOAD_USERNAME,
+			MODULE_TYPE,
+			MODULE_ID,
+			SERVER_IP,
+			RESOURCE_PATH,
+			UPLOAD_TIME
+		)
+		values
+		(
+			#{id,jdbcType=VARCHAR},
+			#{fileName,jdbcType=VARCHAR},
+			#{serverFileName,jdbcType=VARCHAR},
+			#{uploadUserId,jdbcType=VARCHAR},
+			#{uploadUserName,jdbcType=VARCHAR},
+			#{moduleType,jdbcType=VARCHAR},
+			#{modelId,jdbcType=VARCHAR},
+			#{serverIp,jdbcType=VARCHAR},
+			#{resourcePath,jdbcType=VARCHAR},
+			#{uploadTime,jdbcType=TIMESTAMP}
+			
+		)
+	</insert>
+	
+	<!-- 更新一条附件信息 -->
+	<update id="updateAttachmentInfo" parameterType="com.boco.eoms.system.attachment.model.AttachmentInfo">
+		update ATTACHMENT_INFO set 
+			FILENAME = #{fileName,jdbcType=VARCHAR},
+			SERVER_FILENAME = #{serverFileName,jdbcType=VARCHAR},
+			UPLOAD_USERID = #{uploadUserId,jdbcType=VARCHAR},
+			UPLOAD_USERNAME = #{uploadUserName,jdbcType=VARCHAR},
+			MODULE_TYPE = #{moduleType,jdbcType=VARCHAR},
+			MODULE_ID = #{address,jdbcType=VARCHAR},
+			SERVER_IP = #{serverIp,jdbcType=VARCHAR},
+			RESOURCE_PATH = #{resourcePath,jdbcType=VARCHAR},
+			UPLOAD_TIME = #{uploadTime,jdbcType=TIMESTAMP}
+		WHERE ID = #{id,jdbcType=VARCHAR}
+	</update>
+	
+	<!-- 删除一条附件信息 -->
+    <delete id="deleteAttachmentInfoById" parameterType="java.lang.String">  
+        delete from ATTACHMENT_INFO where id = #{id,jdbcType=VARCHAR}
+    </delete>
+    
+    <!-- 删除一条附件信息 -->
+    <delete id="deleteAttachmentInfoByServerFileName" parameterType="java.lang.String">  
+        delete from ATTACHMENT_INFO where SERVER_FILENAME = #{serverFileName,jdbcType=VARCHAR}
+    </delete>
+    
+    <!-- 批量插入附件信息 -->
+	<insert id="insertAttachmentInfoList" parameterType="java.util.List">
+        	insert into ATTACHMENT_INFO 
+			(
+				ID,
+				FILENAME,
+				SERVER_FILENAME,
+				UPLOAD_USERID,
+				UPLOAD_USERNAME,
+				MODULE_TYPE,
+				MODULE_ID,
+				SERVER_IP,
+				RESOURCE_PATH,
+				UPLOAD_TIME
+			)
+        <foreach collection="list" item="item" index="index" separator="union all">
+			(
+				select
+					#{item.id,jdbcType=VARCHAR},
+					#{item.fileName,jdbcType=VARCHAR},
+					#{item.serverFileName,jdbcType=VARCHAR},
+					#{item.uploadUserId,jdbcType=VARCHAR},
+					#{item.uploadUserName,jdbcType=VARCHAR},
+					#{item.moduleType,jdbcType=VARCHAR},
+					#{item.modelId,jdbcType=VARCHAR},
+					#{item.serverIp,jdbcType=VARCHAR},
+					#{item.resourcePath,jdbcType=VARCHAR},
+					#{item.uploadTime,jdbcType=DATE}
+				from dual
+			)
+		</foreach>
+	</insert>
+</mapper>

@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.boco.eoms.shiftAlarmAct.dao.ShiftAlarmactMapper">
+	<resultMap id="BaseResultMap" type="com.boco.eoms.shiftAlarmAct.model.ShiftAlarmactModel">
+		<id column="ALARM_ID" jdbcType="VARCHAR" property="id" />
+		<result column="EQP_OBJECT_CLASS" jdbcType="VARCHAR" property="eqpobjectclass" />
+		<result column="EQP_LABEL" jdbcType="VARCHAR" property="eqplabel" />
+		<result column="ALARM_TITLE_TEXT" jdbcType="VARCHAR" property="alarmtitletext" />
+		<result column="ORG_SEVERITY" jdbcType="INTEGER" property="orgseverity" />
+		<result column="STATION_NAME" jdbcType="VARCHAR" property="stationname" />
+		<result column="EVENT_TIME" jdbcType="TIMESTAMP" property="eventtime" />
+		<result column="SUBCENTER_NAME" jdbcType="VARCHAR" property="subcentername" />
+	</resultMap>
+	<sql id="Base_Column_List">
+		ALARM_ID, EQP_OBJECT_CLASS, EQP_LABEL, ALARM_TITLE_TEXT, ORG_SEVERITY, STATION_NAME, 
+		EVENT_TIME, SUBCENTER_NAME
+	</sql>
+	
+
+	
+	<delete id="deleteByAlarmClear" >
+		delete from DUTY_SHIFT_ALARMACT
+		where ALARM_ID  not in 
+		 (select fp0||'_'||fp1||'_'||fp2||'_'||fp3 as alarm_id from nmosdb.tfa_alarm_act 
+		  where active_status = 1 and (sheet_send_status = 0 or sheet_send_status is null)
+		 )
+	</delete>
+	
+	<delete id="deleteBacthByPrimaryKey" >
+		delete from DUTY_SHIFT_ALARMACT
+		where ALARM_ID in 
+		<foreach  item="item" collection="array" index="index"  open="(" separator="," close=")">#{item}</foreach>
+	</delete>
+	
+	<select id="selectDutyAlarm"  resultMap="BaseResultMap">
+		select <include refid="Base_Column_List" /> from  DUTY_SHIFT_ALARMACT 
+	</select>
+	
+	<select id="selectTfaAlarm"  resultMap="BaseResultMap" parameterType="java.lang.String">
+		select <include refid="Base_Column_List" /> from
+		(select fp0||'_'||fp1||'_'||fp2||'_'||fp3 as alarm_id,eqp_object_class,eqp_label,alarm_title_text,
+			org_severity,station_name,event_time,subcenter_name 
+		from nmosdb.tfa_alarm_act where active_status = 1 and (sheet_send_status = 0 or sheet_send_status is null)
+		    ${condition}
+		)  a  where a.alarm_id not in (select alarm_id from DUTY_SHIFT_ALARMACT ) 
+		 order by  EVENT_TIME desc
+	</select>
+	
+	<insert id="insertByAlarmId">
+		insert into DUTY_SHIFT_ALARMACT 
+		(ALARM_ID, EQP_OBJECT_CLASS, EQP_LABEL,ALARM_TITLE_TEXT, ORG_SEVERITY, STATION_NAME,EVENT_TIME, SUBCENTER_NAME)
+		select ALARM_ID, EQP_OBJECT_CLASS, EQP_LABEL,ALARM_TITLE_TEXT, ORG_SEVERITY, STATION_NAME, EVENT_TIME, SUBCENTER_NAME
+		 from
+		 (select fp0||'_'||fp1||'_'||fp2||'_'||fp3 as alarm_id,eqp_object_class,eqp_label,alarm_title_text,
+		 org_severity,station_name,event_time,subcenter_name 
+		  from nmosdb.tfa_alarm_act 
+		  where active_status = 1 and (sheet_send_status = 0 or sheet_send_status is null)
+		  )  A  where A.alarm_id  in 
+		<foreach  item="item" collection="array" index="index"  open="(" separator="," close=")"> #{item} </foreach>
+	</insert>
+	
+	<insert id="insert" parameterType="com.boco.eoms.shiftAlarmAct.model.ShiftAlarmactModel">
+		insert into DUTY_SHIFT_ALARMACT (ALARM_ID, EQP_OBJECT_CLASS, EQP_LABEL, 
+			ALARM_TITLE_TEXT, ORG_SEVERITY, STATION_NAME, 
+			EVENT_TIME, SUBCENTER_NAME)
+		values (#{ALARM_ID,jdbcType=VARCHAR}, #{EQP_OBJECT_CLASS,jdbcType=VARCHAR}, #{EQP_LABEL,jdbcType=VARCHAR}, 
+			#{ALARM_TITLE_TEXT,jdbcType=VARCHAR}, #{ORG_SEVERITY,jdbcType=INTEGER}, #{STATION_NAME,jdbcType=VARCHAR}, 
+			#{EVENT_TIME,jdbcType=TIMESTAMP}, #{SUBCENTER_NAME,jdbcType=VARCHAR})
+	</insert>
+	<insert id="insertSelective" parameterType="com.boco.eoms.shiftAlarmAct.model.ShiftAlarmactModel">
+		insert into DUTY_SHIFT_ALARMACT
+		<trim prefix="(" suffix=")" suffixOverrides=",">
+			<if test="ALARM_ID != null">
+				ALARM_ID,
+			</if>
+			<if test="EQP_OBJECT_CLASS != null">
+				EQP_OBJECT_CLASS,
+			</if>
+			<if test="EQP_LABEL != null">
+				EQP_LABEL,
+			</if>
+			<if test="ALARM_TITLE_TEXT != null">
+				ALARM_TITLE_TEXT,
+			</if>
+			<if test="ORG_SEVERITY != null">
+				ORG_SEVERITY,
+			</if>
+			<if test="STATION_NAME != null">
+				STATION_NAME,
+			</if>
+			<if test="EVENT_TIME != null">
+				EVENT_TIME,
+			</if>
+			<if test="SUBCENTER_NAME != null">
+				SUBCENTER_NAME,
+			</if>
+		</trim>
+		<trim prefix="values (" suffix=")" suffixOverrides=",">
+			<if test="ALARM_ID != null">
+				#{ALARM_ID,jdbcType=VARCHAR},
+			</if>
+			<if test="EQP_OBJECT_CLASS != null">
+				#{EQP_OBJECT_CLASS,jdbcType=VARCHAR},
+			</if>
+			<if test="EQP_LABEL != null">
+				#{EQP_LABEL,jdbcType=VARCHAR},
+			</if>
+			<if test="ALARM_TITLE_TEXT != null">
+				#{ALARM_TITLE_TEXT,jdbcType=VARCHAR},
+			</if>
+			<if test="ORG_SEVERITY != null">
+				#{ORG_SEVERITY,jdbcType=INTEGER},
+			</if>
+			<if test="STATION_NAME != null">
+				#{STATION_NAME,jdbcType=VARCHAR},
+			</if>
+			<if test="EVENT_TIME != null">
+				#{EVENT_TIME,jdbcType=TIMESTAMP},
+			</if>
+			<if test="SUBCENTER_NAME != null">
+				#{SUBCENTER_NAME,jdbcType=VARCHAR},
+			</if>
+		</trim>
+	</insert>
+	<update id="updateByPrimaryKey" parameterType="com.boco.eoms.shiftAlarmAct.model.ShiftAlarmactModel">
+		update DUTY_SHIFT_ALARMACT
+		set EQP_OBJECT_CLASS = #{EQP_OBJECT_CLASS,jdbcType=VARCHAR},
+			EQP_LABEL = #{EQP_LABEL,jdbcType=VARCHAR},
+			ALARM_TITLE_TEXT = #{ALARM_TITLE_TEXT,jdbcType=VARCHAR},
+			ORG_SEVERITY = #{ORG_SEVERITY,jdbcType=INTEGER},
+			STATION_NAME = #{STATION_NAME,jdbcType=VARCHAR},
+			EVENT_TIME = #{EVENT_TIME,jdbcType=TIMESTAMP},
+			SUBCENTER_NAME = #{SUBCENTER_NAME,jdbcType=VARCHAR}
+		where ALARM_ID = #{ALARM_ID,jdbcType=VARCHAR}
+	</update>
+	<update id="updateByPrimaryKeySelective" parameterType="com.boco.eoms.shiftAlarmAct.model.ShiftAlarmactModel">
+		update DUTY_SHIFT_ALARMACT
+		<set>
+			<if test="EQP_OBJECT_CLASS != null">
+				EQP_OBJECT_CLASS = #{EQP_OBJECT_CLASS,jdbcType=VARCHAR},
+			</if>
+			<if test="EQP_LABEL != null">
+				EQP_LABEL = #{EQP_LABEL,jdbcType=VARCHAR},
+			</if>
+			<if test="ALARM_TITLE_TEXT != null">
+				ALARM_TITLE_TEXT = #{ALARM_TITLE_TEXT,jdbcType=VARCHAR},
+			</if>
+			<if test="ORG_SEVERITY != null">
+				ORG_SEVERITY = #{ORG_SEVERITY,jdbcType=INTEGER},
+			</if>
+			<if test="STATION_NAME != null">
+				STATION_NAME = #{STATION_NAME,jdbcType=VARCHAR},
+			</if>
+			<if test="EVENT_TIME != null">
+				EVENT_TIME = #{EVENT_TIME,jdbcType=TIMESTAMP},
+			</if>
+			<if test="SUBCENTER_NAME != null">
+				SUBCENTER_NAME = #{SUBCENTER_NAME,jdbcType=VARCHAR},
+			</if>
+		</set>
+		where ALARM_ID = #{ALARM_ID,jdbcType=VARCHAR}
+	</update>
+	<delete id="deleteByPrimaryKey" parameterType="java.lang.String">
+		delete from DUTY_SHIFT_ALARMACT
+		where ALARM_ID = #{ALARM_ID,jdbcType=VARCHAR}
+	</delete>
+	<select id="selectByPrimaryKey" parameterType="java.lang.String" resultMap="BaseResultMap">
+		select 
+		<include refid="Base_Column_List" />
+		from DUTY_SHIFT_ALARMACT
+		where ALARM_ID = #{ALARM_ID,jdbcType=VARCHAR}
+	</select>
+</mapper>

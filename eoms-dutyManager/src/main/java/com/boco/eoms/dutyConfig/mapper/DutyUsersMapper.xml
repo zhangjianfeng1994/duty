@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.boco.eoms.dutyConfig.dao.DutyUsersMapper" >
+  <resultMap id="BaseResultMap" type="com.boco.eoms.dutyConfig.model.DutyUsers" >
+    <id column="DUTY_USERS_ID" property="dutyUsersId" jdbcType="DECIMAL" />
+    <result column="USER_ID" property="userId" jdbcType="VARCHAR" />
+    <result column="USER_NAME" property="userName" jdbcType="VARCHAR" />
+    <result column="DUTY_CONFIG_ID" property="dutyConfigId" jdbcType="DECIMAL" />
+    <result column="CREATE_TIME" property="createTime" jdbcType="TIMESTAMP" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    DUTY_USERS_ID, USER_ID, USER_NAME, DUTY_CONFIG_ID, CREATE_TIME
+  </sql>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    select 
+    <include refid="Base_Column_List" />
+    from DUTY_USERS
+    where DUTY_USERS_ID = #{dutyUsersId,jdbcType=DECIMAL}
+  </select>
+  <select id="selectByDutyConfigId" resultMap="BaseResultMap" parameterType="int" >
+    select * from DUTY_USERS where DUTY_CONFIG_ID = #{dutyConfigId,jdbcType=INTEGER}  and DELETE_IF = '0'
+  </select>
+  
+  <select id="selectByUserid" resultMap="BaseResultMap" parameterType="String" >
+    select 
+    <include refid="Base_Column_List" /> 
+    from DUTY_USERS
+    where USER_ID = #{userid,jdbcType=VARCHAR}
+  </select>
+  
+  
+  <select id="selectByUserId" resultMap="BaseResultMap"  parameterType="java.util.Map"  resultType="java.util.HashMap">
+    select 
+    <include refid="Base_Column_List" /> 
+    from DUTY_USERS
+    where DELETE_IF = '0' and ${condition}
+  </select>
+  
+  
+  <select id="selectMaxId" resultType="int" >
+  	select max(duty_USERS_ID) from DUTY_USERS
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from DUTY_USERS
+    where DUTY_USERS_ID = #{dutyUsersId,jdbcType=INTEGER}
+  </delete>
+   <delete id="deleteByConfigId" parameterType="java.lang.Integer" >
+    delete from DUTY_USERS
+    where DUTY_CONFIG_ID =  #{dutyConfigId,jdbcType=INTEGER} and delete_if = '0'
+  </delete>
+  <delete id="deleteByDeleteIf" parameterType="java.lang.Integer" >
+    update DUTY_USERS set DELETE_IF = '1'  where DUTY_CONFIG_ID =  #{dutyConfigId,jdbcType=INTEGER} 
+  </delete>
+  <insert id="insert" parameterType="com.boco.eoms.dutyConfig.model.DutyUsers" >
+    insert into DUTY_USERS (DUTY_USERS_ID, USER_ID, USER_NAME, 
+      DUTY_CONFIG_ID, CREATE_TIME)
+    values (#{dutyUsersId,jdbcType=INTEGER}, #{userId,jdbcType=VARCHAR}, #{userName,jdbcType=VARCHAR}, 
+      #{dutyConfigId,jdbcType=INTEGER}, #{createTime,jdbcType=TIMESTAMP})
+  </insert>
+  <insert id="insertSelective" parameterType="com.boco.eoms.dutyConfig.model.DutyUsers" >
+    <selectKey resultType="java.lang.Integer" keyProperty="dutyUsersId" order="BEFORE">
+    	SELECT duty_users_seq.NEXTVAL FROM DUAL
+    </selectKey>
+    insert into DUTY_USERS
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="dutyUsersId != null" >
+        DUTY_USERS_ID,
+      </if>
+      <if test="userId != null" >
+        USER_ID,
+      </if>
+      <if test="userName != null" >
+        USER_NAME,
+      </if>
+      <if test="dutyConfigId != null" >
+        DUTY_CONFIG_ID,
+      </if>
+      <if test="createTime != null" >
+        CREATE_TIME,
+      </if>
+      <if test="createTime != null" >
+        DELETE_IF,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="dutyUsersId != null" >
+        #{dutyUsersId,jdbcType=INTEGER},
+      </if>
+      <if test="userId != null" >
+        #{userId,jdbcType=VARCHAR},
+      </if>
+      <if test="userName != null" >
+        #{userName,jdbcType=VARCHAR},
+      </if>
+      <if test="dutyConfigId != null" >
+        #{dutyConfigId,jdbcType=INTEGER},
+      </if>
+      <if test="createTime != null" >
+        #{createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="createTime != null" >
+        0
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.boco.eoms.dutyConfig.model.DutyUsers" >
+    update DUTY_USERS
+    <set >
+      <if test="userId != null" >
+        USER_ID = #{userId,jdbcType=VARCHAR},
+      </if>
+      <if test="userName != null" >
+        USER_NAME = #{userName,jdbcType=VARCHAR},
+      </if>
+      <if test="dutyConfigId != null" >
+        DUTY_CONFIG_ID = #{dutyConfigId,jdbcType=INTEGER},
+      </if>
+      <if test="createTime != null" >
+        CREATE_TIME = #{createTime,jdbcType=TIMESTAMP},
+      </if>
+    </set>
+    where DUTY_USERS_ID = #{dutyUsersId,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.boco.eoms.dutyConfig.model.DutyUsers" >
+    update DUTY_USERS
+    set USER_ID = #{userId,jdbcType=VARCHAR},
+      USER_NAME = #{userName,jdbcType=VARCHAR},
+      CREATE_TIME = #{createTime,jdbcType=TIMESTAMP}
+    where DUTY_USERS_ID = #{dutyUsersId,jdbcType=INTEGER}
+  </update>
+  <sql id="MysqlDialectSuffix" >
+    <if test="pageHelper != null" >
+      <![CDATA[ limit #{pageHelper.begin}, #{pageHelper.length}]]>
+    </if>
+  </sql>
+  <insert id="insertBatch" parameterType="com.boco.eoms.dutyConfig.model.DutyUsers" >
+    insert into DUTY_USERS
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      DUTY_USERS_ID,USER_ID,USER_NAME,DUTY_CONFIG_ID,CREATE_TIME,
+    </trim>
+    values
+    <foreach collection="list" index="index" item="item" separator="," >
+      (
+      <trim suffixOverrides="," >
+        #{item.dutyUsersId,jdbcType=INTEGER},#{item.userId,jdbcType=VARCHAR},#{item.userName,jdbcType=VARCHAR},#{item.dutyConfigId,jdbcType=INTEGER},#{item.createTime,jdbcType=TIMESTAMP},
+      </trim>
+      )
+    </foreach>
+  </insert>
+</mapper>

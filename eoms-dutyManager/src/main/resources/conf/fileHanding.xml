@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<fileHanding>
+	<!-- 附件的配置路径（开头不加斜杠“/”） -->
+	<fileUrl>
+		<fileRootPath>/opt/eoms/upload/</fileRootPath><!-- 附件上传路径 用户附件上传下载使用 -->
+		<projectPath>webapps/eoms/upload/</projectPath><!-- 项目导入导出模板路径 -->
+		<temp>temp/</temp><!-- 临时文件存放地 -->
+		<hbs>hbs/</hbs><!-- 下载模板时，模板的存放路径 -->
+		<commonassignment>commonassignment/</commonassignment><!-- 任务工单附件存放路径 -->
+		<centralfault>centralfault/</centralfault>
+		<knowledge>knowledge/</knowledge>
+		<duty>duty/</duty>  <!-- 值班导入时存放的文件路径 -->
+	</fileUrl>
+	
+	<!-- 解析excel时对应的表头 -->
+	<excelKey>
+		<spSupplierKey>supplierName,contacts,telephone,mobilephone,fax,address,remark</spSupplierKey>
+		<centralFaultSendRuleKey>mainSubCenter,t1DealTeamId,t2DealTeamId,copyPersonId</centralFaultSendRuleKey>
+		<sp_factoryKey>factoryName,brandName,brandId,contacts,telephone,mobilephone,fax,address,remark</sp_factoryKey>
+	</excelKey>
+	
+	<!-- 下载模板时，模板的文件名 -->
+	<hbsCn>
+		<spSupplier>供货商模板</spSupplier>
+		<centralFaultSendRule>直派一线规则模板</centralFaultSendRule>
+		<sp_factory>厂家管理模板</sp_factory>
+	</hbsCn>
+	<hbsEn>
+		<spSupplier>spSupplier</spSupplier>
+		<centralFaultSendRule>centralFaultSendRule</centralFaultSendRule>
+		<sp_factory>sp_factory</sp_factory>
+		
+	</hbsEn>
+</fileHanding>

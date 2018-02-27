@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE generatorConfiguration PUBLIC "-//mybatis.org//DTD MyBatis Generator Configuration 1.0//EN" "http://mybatis.org/dtd/mybatis-generator-config_1_0.dtd" >
+<generatorConfiguration >
+	<classPathEntry location="E:\javaProgram\databaseDrivers\ojdbc14.jar"/>
+	<context id="context1" >
+	<jdbcConnection driverClass="oracle.jdbc.driver.OracleDriver" connectionURL="jdbc:oracle:thin:@10.32.1.148:1521:orcl" userId="eoms35b" password="eoms35b" />
+	<javaModelGenerator targetPackage="com.boco.eoms.management.model" targetProject="networkManage" />
+	<sqlMapGenerator targetPackage="mybatis" targetProject="networkManage" />
+	<javaClientGenerator targetPackage="com.boco.eoms.management.dao" implementationPackage="com.boco.eoms.management.dao.impl"   targetProject="networkManage" type="XMLMAPPER" >
+		 <property name="enableSubPackages" value="true" />
+	</javaClientGenerator>
+	<!-- 
+	<table schema="" tableName="login_logs"  domainObjectName="AnlysisLoginLogs" enableCountByExample="false"
+	 enableUpdateByExample="false" enableDeleteByExample="false" enableSelectByExample="false" selectByExampleQueryId="false">
+		<property name="useActualColumnNames" value="false"/>
+	</table> 
+
+	<table schema="" tableName="access_logs"  domainObjectName="AnlysisAccessLogs" enableCountByExample="false"
+	 enableUpdateByExample="false" enableDeleteByExample="false" enableSelectByExample="false" selectByExampleQueryId="false">
+		<property name="useActualColumnNames" value="false"/>
+	</table>
+	
+	
+	<table schema="" tableName="PORTAL_SYSTEM_MENU"  domainObjectName="AnlysisSystemMenu" enableCountByExample="false"
+	 enableUpdateByExample="false" enableDeleteByExample="false" enableSelectByExample="false" selectByExampleQueryId="false">
+		<property name="useActualColumnNames" value="false"/>
+	</table>
+	-->
+	<table schema="" tableName="UPLOADLOG"  domainObjectName="UploadLog" enableCountByExample="false"
+	 enableUpdateByExample="false" enableDeleteByExample="false" enableSelectByExample="false" selectByExampleQueryId="false">
+		<property name="useActualColumnNames" value="false"/>
+	</table>
+	</context>
+</generatorConfiguration>

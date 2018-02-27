@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.boco.eoms.successionShiftUser.dao.SuccessionShiftUserMapper">
+	<resultMap id="BaseResultMap" type="com.boco.eoms.successionShiftUser.model.SuccessionShiftUserModel">
+		<id column="SHIFT_USER_ID" jdbcType="INTEGER" property="SHIFT_USER_ID" />
+		<result column="USER_ID" jdbcType="VARCHAR" property="USER_ID" />
+		<result column="SHIFT_ID" jdbcType="INTEGER" property="SHIFT_ID" />
+		<result column="SUCCESSION_TIME" jdbcType="TIMESTAMP" property="SUCCESSION_TIME" />
+		<result column="SHIFT_TIME" jdbcType="TIMESTAMP" property="SHIFT_TIME" />
+		<result column="SUCCESSION_IF" jdbcType="INTEGER" property="SUCCESSION_IF" />
+		<result column="SHIFT_IF" jdbcType="INTEGER" property="SHIFT_IF" />
+		<result column="NOTE" jdbcType="VARCHAR" property="NOTE" />
+	</resultMap>
+	<sql id="Base_Column_List">
+		SHIFT_USER_ID, USER_ID, SHIFT_ID, SUCCESSION_TIME, SHIFT_TIME, SUCCESSION_IF, SHIFT_IF,NOTE
+	</sql>
+	
+	<!-- 根据交接班id查询 交接班人员及人员name -->
+	<select id="selectModelAndUserNameByshiftId" parameterType="int" resultType="java.util.Map">
+	 select SHIFT_USER_ID, a.USER_ID,b.USER_NAME, SHIFT_ID, SUCCESSION_TIME, SHIFT_TIME, SUCCESSION_IF, SHIFT_IF,NOTE
+		  from DUTY_SUCCESSION_SHIFT_USER a,DUTY_USERS b
+		  where a.SHIFT_ID = #{shift_id,jdbcType=INTEGER} and a.USER_ID = b.USER_ID order by SHIFT_TIME
+	</select>
+	
+	<!-- 根据交接班id查询 接班 交接班人员类似于 zhangsan,lisi -->
+	<select id="selectSuccessionUseridByshiftId" parameterType="int" resultType="java.lang.String">
+		 select distinct listagg(USER_ID,',') within GROUP(order by SUCCESSION_TIME) over (partition by SHIFT_ID)  as userid 
+		 from ( select * from DUTY_SUCCESSION_SHIFT_USER 
+		  where SHIFT_ID = #{shift_id,jdbcType=INTEGER} and SUCCESSION_IF =1 order by SUCCESSION_TIME asc )
+	</select>
+	
+	<!-- 根据交接班id查询 交班 交接班人员类似于 zhangsan,lisi -->
+	<select id="selectShiftUseridByshiftId" parameterType="int" resultType="java.lang.String">
+		 select distinct listagg(USER_ID,',') within GROUP(order by SHIFT_TIME) over (partition by SHIFT_ID)  as userid 
+		 from ( select * from DUTY_SUCCESSION_SHIFT_USER 
+		 	where SHIFT_ID = #{shift_id,jdbcType=INTEGER} and SHIFT_IF =1 order by SHIFT_TIME asc )
+	</select>
+	
+	<insert id="insert" parameterType="com.boco.eoms.successionShiftUser.model.SuccessionShiftUserModel">
+		<selectKey resultType="java.lang.Integer" keyProperty="SHIFT_USER_ID" order="BEFORE">
+    	SELECT DUTY_SUCCESSION_SHIFT_USER_SEQ.NEXTVAL FROM DUAL
+    	</selectKey>
+    	
+		insert into DUTY_SUCCESSION_SHIFT_USER (SHIFT_USER_ID, USER_ID, SHIFT_ID, 
+			SUCCESSION_TIME, SHIFT_TIME, SUCCESSION_IF, 
+			SHIFT_IF,NOTE)
+		values (#{SHIFT_USER_ID,jdbcType=INTEGER}, #{USER_ID,jdbcType=VARCHAR}, #{SHIFT_ID,jdbcType=INTEGER}, 
+			#{SUCCESSION_TIME,jdbcType=TIMESTAMP}, #{SHIFT_TIME,jdbcType=TIMESTAMP}, #{SUCCESSION_IF,jdbcType=INTEGER}, 
+			#{SHIFT_IF,jdbcType=INTEGER},#{NOTE,jdbcType=VARCHAR})
+	</insert>
+	<insert id="insertSelective" parameterType="com.boco.eoms.successionShiftUser.model.SuccessionShiftUserModel">
+		
+		<selectKey resultType="java.lang.Integer" keyProperty="SHIFT_USER_ID" order="BEFORE">
+    	SELECT DUTY_SUCCESSION_SHIFT_USER_SEQ.NEXTVAL FROM DUAL
+    	</selectKey>
+    	
+		insert into DUTY_SUCCESSION_SHIFT_USER
+		<trim prefix="(" suffix=")" suffixOverrides=",">
+			<if test="SHIFT_USER_ID != null">
+				SHIFT_USER_ID,
+			</if>
+			<if test="USER_ID != null">
+				USER_ID,
+			</if>
+			<if test="SHIFT_ID != null">
+				SHIFT_ID,
+			</if>
+			<if test="SUCCESSION_TIME != null">
+				SUCCESSION_TIME,
+			</if>
+			<if test="SHIFT_TIME != null">
+				SHIFT_TIME,
+			</if>
+			<if test="SUCCESSION_IF != null">
+				SUCCESSION_IF,
+			</if>
+			<if test="SHIFT_IF != null">
+				SHIFT_IF,
+			</if>
+			<if test="NOTE != null">
+				NOTE,
+			</if>
+		</trim>
+		<trim prefix="values (" suffix=")" suffixOverrides=",">
+			<if test="SHIFT_USER_ID != null">
+				#{SHIFT_USER_ID,jdbcType=INTEGER},
+			</if>
+			<if test="USER_ID != null">
+				#{USER_ID,jdbcType=VARCHAR},
+			</if>
+			<if test="SHIFT_ID != null">
+				#{SHIFT_ID,jdbcType=INTEGER},
+			</if>
+			<if test="SUCCESSION_TIME != null">
+				#{SUCCESSION_TIME,jdbcType=TIMESTAMP},
+			</if>
+			<if test="SHIFT_TIME != null">
+				#{SHIFT_TIME,jdbcType=TIMESTAMP},
+			</if>
+			<if test="SUCCESSION_IF != null">
+				#{SUCCESSION_IF,jdbcType=INTEGER},
+			</if>
+			<if test="SHIFT_IF != null">
+				#{SHIFT_IF,jdbcType=INTEGER},
+			</if>
+			<if test="NOTE != null">
+				#{NOTE,jdbcType=VARCHAR},
+			</if>
+		</trim>
+	</insert>
+	<update id="updateByPrimaryKey" parameterType="com.boco.eoms.successionShiftUser.model.SuccessionShiftUserModel">
+		update DUTY_SUCCESSION_SHIFT_USER
+		set USER_ID = #{USER_ID,jdbcType=VARCHAR},
+			SHIFT_ID = #{SHIFT_ID,jdbcType=INTEGER},
+			SUCCESSION_TIME = #{SUCCESSION_TIME,jdbcType=TIMESTAMP},
+			SHIFT_TIME = #{SHIFT_TIME,jdbcType=TIMESTAMP},
+			SUCCESSION_IF = #{SUCCESSION_IF,jdbcType=INTEGER},
+			SHIFT_IF = #{SHIFT_IF,jdbcType=INTEGER},
+			NOTE = #{NOTE,jdbcType=INTEGER}
+		where SHIFT_USER_ID = #{SHIFT_USER_ID,jdbcType=INTEGER}
+	</update>
+	<update id="updateByPrimaryKeySelective" parameterType="com.boco.eoms.successionShiftUser.model.SuccessionShiftUserModel">
+		update DUTY_SUCCESSION_SHIFT_USER
+		<set>
+			<if test="USER_ID != null">
+				USER_ID = #{USER_ID,jdbcType=VARCHAR},
+			</if>
+			<if test="SHIFT_ID != null">
+				SHIFT_ID = #{SHIFT_ID,jdbcType=INTEGER},
+			</if>
+			<if test="SUCCESSION_TIME != null">
+				SUCCESSION_TIME = #{SUCCESSION_TIME,jdbcType=TIMESTAMP},
+			</if>
+			<if test="SHIFT_TIME != null">
+				SHIFT_TIME = #{SHIFT_TIME,jdbcType=TIMESTAMP},
+			</if>
+			<if test="SUCCESSION_IF != null">
+				SUCCESSION_IF = #{SUCCESSION_IF,jdbcType=INTEGER},
+			</if>
+			<if test="SHIFT_IF != null">
+				SHIFT_IF = #{SHIFT_IF,jdbcType=INTEGER},
+			</if>
+			<if test="NOTE != null">
+				NOTE = #{NOTE,jdbcType=VARCHAR},
+			</if>
+		</set>
+		where SHIFT_USER_ID = #{SHIFT_USER_ID,jdbcType=INTEGER}
+	</update>
+	
+	<update id="updateByUserAndShiftIdSelective" parameterType="com.boco.eoms.successionShiftUser.model.SuccessionShiftUserModel">
+		update DUTY_SUCCESSION_SHIFT_USER
+		<set>
+			<if test="SUCCESSION_TIME != null">
+				SUCCESSION_TIME = #{SUCCESSION_TIME,jdbcType=TIMESTAMP},
+			</if>
+			<if test="SHIFT_TIME != null">
+				SHIFT_TIME = #{SHIFT_TIME,jdbcType=TIMESTAMP},
+			</if>
+			<if test="SUCCESSION_IF != null">
+				SUCCESSION_IF = #{SUCCESSION_IF,jdbcType=INTEGER},
+			</if>
+			<if test="SHIFT_IF != null">
+				SHIFT_IF = #{SHIFT_IF,jdbcType=INTEGER},
+			</if>
+			<if test="NOTE != null">
+				NOTE = #{NOTE,jdbcType=VARCHAR},
+			</if>
+		</set>
+		where USER_ID = #{USER_ID,jdbcType=VARCHAR}  and SHIFT_ID = #{SHIFT_ID,jdbcType=INTEGER}
+	</update>
+	
+	<delete id="deleteByPrimaryKey" parameterType="int">
+		delete from DUTY_SUCCESSION_SHIFT_USER
+		where SHIFT_USER_ID = #{SHIFT_USER_ID,jdbcType=INTEGER}
+	</delete>
+	<select id="selectByPrimaryKey" parameterType="int" resultMap="BaseResultMap">
+		select 
+		<include refid="Base_Column_List" />
+		from DUTY_SUCCESSION_SHIFT_USER
+		where SHIFT_USER_ID = #{SHIFT_USER_ID,jdbcType=INTEGER}
+	</select>
+</mapper>

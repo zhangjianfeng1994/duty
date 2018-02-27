@@ -1,0 +1,333 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.boco.eoms.shiftCentralfault.dao.ShiftCentralfaultMapper">
+	<resultMap id="BaseResultMap" type="com.boco.eoms.shiftCentralfault.model.ShiftCentralfaultModel">
+		<id column="SHEETID" jdbcType="VARCHAR" property="id" />
+		<result column="SHIFT_ID" jdbcType="INTEGER" property="shiftid" />
+		<result column="TITLE" jdbcType="VARCHAR" property="title" />
+		<result column="SENDTIME" jdbcType="TIMESTAMP" property="sendtime" />
+		<result column="SHEETCOMPLETELIMIT" jdbcType="VARCHAR" property="sheetcompletelimit" />
+		<result column="MAINALARMCLEARTIME" jdbcType="VARCHAR" property="mainalarmcleartime" />
+		<result column="TASKNAME" jdbcType="VARCHAR" property="taskname" />
+		<result column="TASKSTATUS" jdbcType="VARCHAR" property="taskstatus" />
+		<result column="TASKOWNER" jdbcType="VARCHAR" property="taskowner" />
+		<result column="PREDEALDEPT" jdbcType="VARCHAR" property="predealdept" />
+		<result column="PREDEALUSERID" jdbcType="VARCHAR" property="predealuserid" />
+	</resultMap>
+	<sql id="Base_Column_List">
+		 SHIFT_ID, SHEETID, TITLE, SENDTIME, SHEETCOMPLETELIMIT, MAINALARMCLEARTIME, 
+		TASKNAME, TASKSTATUS, TASKOWNER, PREDEALDEPT, PREDEALUSERID
+	</sql>
+	
+	<select id="selectByPrimaryKey" parameterType="int" resultMap="BaseResultMap">
+		select 
+		<include refid="Base_Column_List" />
+		from DUTY_SHIFT_CENTRALFAULT
+		where SHEETID = #{SHEETID,jdbcType=VARCHAR}
+	</select>
+	
+	<select id="selectByShiftId" parameterType="int" resultMap="BaseResultMap">
+		select 
+		<include refid="Base_Column_List" /> 
+		from  (
+		select distinct 
+		 #{SHIFT_ID,jdbcType=INTEGER} as SHIFT_ID,main.sheetId as SHEETID,
+         main.title as TITLE,main.sendTime as SENDTIME,to_char(main.sheetCompleteLimit,'yyyy-mm-dd hh24:mi:ss') as  SHEETCOMPLETELIMIT,
+         cenmain.mainAlarmClearTime as MAINALARMCLEARTIME,task.taskDisplayName as TASKNAME,
+ 		 TASKSTATUS,  
+         task.taskOwner as TASKOWNER, task.preDealDept PREDEALDEPT,task.preDealUserId PREDEALUSERID
+        from
+         BASE_TASK task,BASE_MAIN main,CENTRALFAULT_MAIN cenmain
+        where (task.taskStatus=2 or task.taskStatus=8)   
+        and task.taskDisplayName!='草稿'   
+        and main.id=task.sheetKey  
+        and main.id=cenmain.mainid
+        and main.deleted!='1'  
+        and main.templateFlag!=1 
+        and main.status=0 
+        and task.taskDisplayName not in ('抄送','阶段回复','阶段通知') 
+        and task.sheetType='CentralFault'
+        and main.sheetId  in (select SHEETID from DUTY_SHIFT_CENTRALFAULT where SHIFT_ID = #{SHIFT_ID,jdbcType=INTEGER})
+ 		order by  sendtime desc
+		)
+	</select>
+	
+	
+	<select id="selectShiftFaultandCentralFaultByContionMap" parameterType="java.util.Map" resultMap="BaseResultMap">
+		select distinct 
+		 #{LAST_SHIFT_ID,jdbcType=INTEGER} as SHIFT_ID,main.sheetId as SHEETID,
+         main.title as TITLE,main.sendTime as SENDTIME,to_char(main.sheetCompleteLimit,'yyyy-mm-dd hh24:mi:ss') as  SHEETCOMPLETELIMIT,
+         cenmain.mainAlarmClearTime as MAINALARMCLEARTIME,task.taskDisplayName as TASKNAME,
+ 		 TASKSTATUS,  
+         task.taskOwner as TASKOWNER, task.preDealDept PREDEALDEPT,task.preDealUserId PREDEALUSERID
+        from
+         BASE_TASK task,BASE_MAIN main,CENTRALFAULT_MAIN cenmain
+        where (task.taskStatus=2 or task.taskStatus=8)   
+        and task.taskDisplayName!='草稿'   
+        and main.id=task.sheetKey  
+        and main.id=cenmain.mainid
+        and main.deleted!='1'  
+        and main.templateFlag!=1 
+        and main.status=0  
+        and task.taskDisplayName not in ('抄送','阶段回复','阶段通知') 
+        and task.sheetType='CentralFault'
+        and main.sheetId  in 
+        			(select SHEETID from DUTY_SHIFT_CENTRALFAULT 
+        			    where SHIFT_ID = #{LAST_SHIFT_ID,jdbcType=INTEGER} and SHEETID  not in 
+				 		(select SHEETID from DUTY_SHIFT_CENTRALFAULT where SHIFT_ID = #{SHIFT_ID,jdbcType=INTEGER}))
+		union all
+		select distinct 
+		 0 as SHIFT_ID,main.sheetId as SHEETID,
+         main.title as TITLE,main.sendTime as SENDTIME,to_char(main.sheetCompleteLimit,'yyyy-mm-dd hh24:mi:ss') as  SHEETCOMPLETELIMIT,
+         cenmain.mainAlarmClearTime as MAINALARMCLEARTIME,task.taskDisplayName as TASKNAME,
+ 		 TASKSTATUS,  
+         task.taskOwner as TASKOWNER, task.preDealDept PREDEALDEPT,task.preDealUserId PREDEALUSERID
+        from
+         BASE_TASK task,BASE_MAIN main,CENTRALFAULT_MAIN cenmain
+        where (task.taskStatus=2 or task.taskStatus=8)   
+        and task.taskDisplayName!='草稿'   
+        and main.id=task.sheetKey  
+        and main.id=cenmain.mainid
+        and main.deleted!='1'  
+        and main.templateFlag!=1 
+        and main.status=0  
+        and task.taskDisplayName not in ('抄送','阶段回复','阶段通知') 
+        and task.sheetType='CentralFault'
+        and main.sendtime &gt;= to_date(#{BEGINTIME,jdbcType=VARCHAR},'yyyy-MM-dd hh24:mi:ss')
+        and main.sendtime &lt;= to_date(#{ENDTIME,jdbcType=VARCHAR},'yyyy-MM-dd hh24:mi:ss')
+        and main.sheetId not in (select SHEETID from DUTY_SHIFT_CENTRALFAULT where SHIFT_ID = #{SHIFT_ID,jdbcType=INTEGER})
+        order by SHIFT_ID desc,sendtime desc
+	</select>
+	
+	<select id="selectCentralFaultBySheetid" parameterType="java.util.Map" resultType="java.util.Map">
+		select distinct 
+			main.sendRoleId as "sendRoleId",
+			main.sendUserId as "sendUserId",
+			main.sheetId as "sheetId",
+			main.title as "title",
+			main.sendTime as "sendTime",
+			main.status as "status",
+			main.sheetAccessories as "sheetAccessories",
+			main.sheetCompleteLimit as "sheetCompleteLimit",
+			cenmain.mainAlarmClearTime as "mainAlarmClearTime",
+			cenmain.mainApplyExcuteHum as "mainApplyExcuteHum",
+			cenmain.mainExcuteHumFlag as "mainExcuteHumFlag",
+			task.sheetKey as "sheetKey",
+			task.id as "id",
+			task.taskName as "taskName",
+			task.operateRoleId as "operateRoleId",
+			task.processId as "processId",
+			task.taskStatus as "taskStatus",
+			task.preLinkId as "preLinkId",
+			task.taskDisplayName as "taskDisplayName",
+			task.createtime as "createtime",  
+			task.taskOwner as "taskOwner",
+			task.preDealDept as "preDealDept",
+			task.preDealUserId as "preDealUserId",
+			task.preTaskName as "preTaskName"
+			from
+		    base_task task,base_main main,centralfault_main cenmain
+		    where (task.taskStatus=2 or task.taskStatus=8 or task.taskStatus=1)   
+		    and task.taskDisplayName!='草稿'   
+		    and main.id=task.sheetKey  
+		    and main.id=cenmain.mainid
+		    and main.deleted!='1'  
+		    and main.templateFlag!=1 
+		    and main.status=0  
+		    and task.taskDisplayName not in ('抄送','阶段回复','阶段通知') 
+		    and task.sheetType='CentralFault'
+			and main.sheetId = #{SHEETID,jdbcType=VARCHAR}
+		   	order by main.sendtime desc	
+	</select>
+	
+
+
+	<insert id="insertBatch" parameterType="int">
+		insert into DUTY_SHIFT_CENTRALFAULT ( SHIFT_ID, SHEETID, 
+			TITLE, SENDTIME, SHEETCOMPLETELIMIT, 
+			MAINALARMCLEARTIME, TASKNAME, TASKSTATUS, 
+			TASKOWNER, PREDEALDEPT, PREDEALUSERID
+			)
+		select distinct 
+		 #{SHIFT_ID,jdbcType=INTEGER} as SHIFT_ID,main.sheetId as SHEETID,
+         main.title as TITLE,main.sendTime as SENDTIME,to_char(main.sheetCompleteLimit,'yyyy-mm-dd hh24:mi:ss') as  SHEETCOMPLETELIMIT,
+         cenmain.mainAlarmClearTime as MAINALARMCLEARTIME,task.taskDisplayName as TASKNAME,
+ 		 task.taskStatus as TASKSTATUS,  
+         task.taskOwner as TASKOWNER, task.preDealDept PREDEALDEPT,task.preDealUserId PREDEALUSERID
+        from
+         BASE_TASK task,BASE_MAIN main,CENTRALFAULT_MAIN cenmain
+        where (task.taskStatus=2 or task.taskStatus=8 or task.taskStatus=1)   
+        and task.taskDisplayName!='草稿'   
+        and main.id=task.sheetKey  
+        and main.id=cenmain.mainid
+        and main.deleted!='1'  
+        and main.templateFlag!=1 
+        and main.status=0  
+        and task.taskDisplayName not in ('抄送','阶段回复','阶段通知') 
+        and task.sheetType='CentralFault'
+        and main.sheetId in
+         <foreach item="item" index="index" collection="SHEETIDS" open="(" separator="," close=")">  
+  		  #{item,jdbcType=VARCHAR}
+ 		</foreach> 
+	</insert>
+	
+	
+    <delete id="deleteByStatus" parameterType="int">
+		    
+	 delete from	DUTY_SHIFT_CENTRALFAULT where SHEETID in 
+      (select  distinct main.sheetId as SHEETID  from
+         BASE_TASK task,BASE_MAIN main,CENTRALFAULT_MAIN cenmain
+        where (task.taskStatus=2 or task.taskStatus=8)   
+        and task.taskDisplayName!='草稿'   
+        and main.id=task.sheetKey  
+        and main.id=cenmain.mainid
+        and main.deleted!='1'  
+        and main.templateFlag!=1 
+        and main.status= 1   
+        and task.sheetType='CentralFault'
+        and main.sheetId  in 
+		(select SHEETID from DUTY_SHIFT_CENTRALFAULT where SHIFT_ID = #{SHIFT_ID,jdbcType=INTEGER})
+	  )
+	  and SHIFT_ID = #{SHIFT_ID,jdbcType=INTEGER}
+	</delete>
+	
+	<insert id="insert" parameterType="com.boco.eoms.shiftCentralfault.model.ShiftCentralfaultModel">
+		insert into DUTY_SHIFT_CENTRALFAULT (SHIFT_ID, SHEETID, 
+			TITLE, SENDTIME, SHEETCOMPLETELIMIT, 
+			MAINALARMCLEARTIME, TASKNAME, TASKSTATUS, 
+			TASKOWNER, PREDEALDEPT, PREDEALUSERID
+			)
+		values ( #{SHIFT_ID,jdbcType=INTEGER}, #{SHEETID,jdbcType=VARCHAR}, 
+			#{TITLE,jdbcType=VARCHAR}, #{SENDTIME,jdbcType=TIMESTAMP}, #{SHEETCOMPLETELIMIT,jdbcType=VARCHAR}, 
+			#{MAINALARMCLEARTIME,jdbcType=VARCHAR}, #{TASKNAME,jdbcType=VARCHAR}, #{TASKSTATUS,jdbcType=VARCHAR}, 
+			#{TASKOWNER,jdbcType=VARCHAR}, #{PREDEALDEPT,jdbcType=VARCHAR}, #{PREDEALUSERID,jdbcType=VARCHAR}
+			)
+	</insert>
+	<insert id="insertSelective" parameterType="com.boco.eoms.shiftCentralfault.model.ShiftCentralfaultModel">
+		insert into DUTY_SHIFT_CENTRALFAULT
+		<trim prefix="(" suffix=")" suffixOverrides=",">
+			<if test="SHIFT_ID != null">
+				SHIFT_ID,
+			</if>
+			<if test="SHEETID != null">
+				SHEETID,
+			</if>
+			<if test="TITLE != null">
+				TITLE,
+			</if>
+			<if test="SENDTIME != null">
+				SENDTIME,
+			</if>
+			<if test="SHEETCOMPLETELIMIT != null">
+				SHEETCOMPLETELIMIT,
+			</if>
+			<if test="MAINALARMCLEARTIME != null">
+				MAINALARMCLEARTIME,
+			</if>
+			<if test="TASKNAME != null">
+				TASKNAME,
+			</if>
+			<if test="TASKSTATUS != null">
+				TASKSTATUS,
+			</if>
+			<if test="TASKOWNER != null">
+				TASKOWNER,
+			</if>
+			<if test="PREDEALDEPT != null">
+				PREDEALDEPT,
+			</if>
+			<if test="PREDEALUSERID != null">
+				PREDEALUSERID,
+			</if>
+		</trim>
+		<trim prefix="values (" suffix=")" suffixOverrides=",">
+			<if test="SHIFT_ID != null">
+				#{SHIFT_ID,jdbcType=INTEGER},
+			</if>
+			<if test="SHEETID != null">
+				#{SHEETID,jdbcType=VARCHAR},
+			</if>
+			<if test="TITLE != null">
+				#{TITLE,jdbcType=VARCHAR},
+			</if>
+			<if test="SENDTIME != null">
+				#{SENDTIME,jdbcType=TIMESTAMP},
+			</if>
+			<if test="SHEETCOMPLETELIMIT != null">
+				#{SHEETCOMPLETELIMIT,jdbcType=VARCHAR},
+			</if>
+			<if test="MAINALARMCLEARTIME != null">
+				#{MAINALARMCLEARTIME,jdbcType=VARCHAR},
+			</if>
+			<if test="TASKNAME != null">
+				#{TASKNAME,jdbcType=VARCHAR},
+			</if>
+			<if test="TASKSTATUS != null">
+				#{TASKSTATUS,jdbcType=VARCHAR},
+			</if>
+			<if test="TASKOWNER != null">
+				#{TASKOWNER,jdbcType=VARCHAR},
+			</if>
+			<if test="PREDEALDEPT != null">
+				#{PREDEALDEPT,jdbcType=VARCHAR},
+			</if>
+			<if test="PREDEALUSERID != null">
+				#{PREDEALUSERID,jdbcType=VARCHAR},
+			</if>
+		</trim>
+	</insert>
+	<update id="updateByPrimaryKey" parameterType="com.boco.eoms.shiftCentralfault.model.ShiftCentralfaultModel">
+		update DUTY_SHIFT_CENTRALFAULT
+		set SHIFT_ID = #{SHIFT_ID,jdbcType=INTEGER},
+			TITLE = #{TITLE,jdbcType=VARCHAR},
+			SENDTIME = #{SENDTIME,jdbcType=TIMESTAMP},
+			SHEETCOMPLETELIMIT = #{SHEETCOMPLETELIMIT,jdbcType=VARCHAR},
+			MAINALARMCLEARTIME = #{MAINALARMCLEARTIME,jdbcType=VARCHAR},
+			TASKNAME = #{TASKNAME,jdbcType=VARCHAR},
+			TASKSTATUS = #{TASKSTATUS,jdbcType=VARCHAR},
+			TASKOWNER = #{TASKOWNER,jdbcType=VARCHAR},
+			PREDEALDEPT = #{PREDEALDEPT,jdbcType=VARCHAR},
+			PREDEALUSERID = #{PREDEALUSERID,jdbcType=VARCHAR}
+		where SHEETID = #{SHEETID,jdbcType=VARCHAR}
+	</update>
+	<update id="updateByPrimaryKeySelective" parameterType="com.boco.eoms.shiftCentralfault.model.ShiftCentralfaultModel">
+		update DUTY_SHIFT_CENTRALFAULT
+		<set>
+			<if test="SHIFT_ID != null">
+				SHIFT_ID = #{SHIFT_ID,jdbcType=INTEGER},
+			</if>
+			<if test="TITLE != null">
+				TITLE = #{TITLE,jdbcType=VARCHAR},
+			</if>
+			<if test="SENDTIME != null">
+				SENDTIME = #{SENDTIME,jdbcType=TIMESTAMP},
+			</if>
+			<if test="SHEETCOMPLETELIMIT != null">
+				SHEETCOMPLETELIMIT = #{SHEETCOMPLETELIMIT,jdbcType=VARCHAR},
+			</if>
+			<if test="MAINALARMCLEARTIME != null">
+				MAINALARMCLEARTIME = #{MAINALARMCLEARTIME,jdbcType=VARCHAR},
+			</if>
+			<if test="TASKNAME != null">
+				TASKNAME = #{TASKNAME,jdbcType=VARCHAR},
+			</if>
+			<if test="TASKSTATUS != null">
+				TASKSTATUS = #{TASKSTATUS,jdbcType=VARCHAR},
+			</if>
+			<if test="TASKOWNER != null">
+				TASKOWNER = #{TASKOWNER,jdbcType=VARCHAR},
+			</if>
+			<if test="PREDEALDEPT != null">
+				PREDEALDEPT = #{PREDEALDEPT,jdbcType=VARCHAR},
+			</if>
+			<if test="PREDEALUSERID != null">
+				PREDEALUSERID = #{PREDEALUSERID,jdbcType=VARCHAR},
+			</if>
+		</set>
+		where SHEETID = #{SHEETID,jdbcType=VARCHAR}
+	</update>
+	<delete id="deleteByPrimaryKey" parameterType="java.util.Map">
+		delete from DUTY_SHIFT_CENTRALFAULT
+		where SHEETID = #{SHEETID,jdbcType=VARCHAR} and SHIFT_ID = #{SHIFT_ID,jdbcType=INTEGER}
+	</delete>
+</mapper>

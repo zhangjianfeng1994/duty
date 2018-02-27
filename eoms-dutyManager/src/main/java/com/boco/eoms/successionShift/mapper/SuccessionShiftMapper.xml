@@ -1,0 +1,345 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.boco.eoms.successionShift.dao.SuccessionShiftMapper">
+	<resultMap id="BaseResultMap" type="com.boco.eoms.successionShift.model.SuccessionShiftModel">
+		<id column="SHIFT_ID" jdbcType="INTEGER" property="SHIFT_ID" />
+		<result column="DUTY_CONFIG_ID" jdbcType="INTEGER" property="DUTY_CONFIG_ID" />
+		<result column="DUTY_FLIGHT_ID" jdbcType="INTEGER" property="DUTY_FLIGHT_ID" />
+		<result column="DUTY_TIME" jdbcType="TIMESTAMP" property="DUTY_TIME" />
+		<result column="NOW_DUTY_USERID" jdbcType="VARCHAR" property="NOW_DUTY_USERID" />
+		<result column="LAST_DUTY_USERID" jdbcType="VARCHAR" property="LAST_DUTY_USERID" />
+		<result column="NEXT_DUTY_USERID" jdbcType="VARCHAR" property="NEXT_DUTY_USERID" />
+		<result column="SUCCESSION_USERID" jdbcType="VARCHAR" property="SUCCESSION_USERID" />
+		<result column="SHIFT_USERID" jdbcType="VARCHAR" property="SHIFT_USERID" />
+		<result column="SUCCESSION_TIME" jdbcType="TIMESTAMP" property="SUCCESSION_TIME" />
+		<result column="SHIFT_TIME" jdbcType="TIMESTAMP" property="SHIFT_TIME" />
+		<result column="SUCCESSION_IF" jdbcType="INTEGER" property="SUCCESSION_IF" />
+		<result column="SHIFT_IF" jdbcType="INTEGER" property="SHIFT_IF" />
+		<result column="FIRST_TIME" jdbcType="TIMESTAMP" property="FIRST_TIME" />
+		<result column="LAST_SHIFT_ID" jdbcType="INTEGER" property="LAST_SHIFT_ID" />
+		<result column="NOTE" jdbcType="VARCHAR" property="NOTE" />
+		<result column="FINAL_SUCCESSION_TIME" jdbcType="TIMESTAMP" property="FINAL_SUCCESSION_TIME" />
+		<result column="FINAL_SHIFT_TIME" jdbcType="TIMESTAMP" property="FINAL_SHIFT_TIME" />
+	</resultMap>
+	<sql id="Base_Column_List">
+		SHIFT_ID, DUTY_CONFIG_ID, DUTY_FLIGHT_ID, DUTY_TIME, NOW_DUTY_USERID, LAST_DUTY_USERID, 
+		NEXT_DUTY_USERID, SUCCESSION_USERID, SHIFT_USERID, SUCCESSION_TIME, SHIFT_TIME, SUCCESSION_IF, 
+		SHIFT_IF, FIRST_TIME ,LAST_SHIFT_ID,NOTE,FINAL_SUCCESSION_TIME,FINAL_SHIFT_TIME
+	</sql>
+	
+	  <!-- 根据值班配置id,班次id,值班时间查询交接班表中数据 -->
+	<select id="selectByDutySchedulingKey" parameterType="java.util.Map" resultMap="BaseResultMap">
+		select 
+		<include refid="Base_Column_List" />
+		from DUTY_SUCCESSION_SHIFT
+		where duty_config_id = #{duty_config_id,jdbcType=INTEGER} 
+		and duty_flight_id = #{duty_flight_id,jdbcType=INTEGER}
+		and duty_time = #{duty_time,jdbcType=DATE}
+	</select>
+	
+	<!-- 根据值班配置id,班次id,值班时间查询交接班表中数据 -->
+	<select id="selectMaxShiftByDutyConfigId" parameterType="int" resultMap="BaseResultMap">
+		select 
+		<include refid="Base_Column_List" />
+		from DUTY_SUCCESSION_SHIFT
+		where duty_config_id = #{duty_config_id,jdbcType=INTEGER} and rownum=1 order by SHIFT_ID desc
+	</select>
+	
+	<!-- 根据值班配置id,人员id,值班时间查询值班统计 -->
+	<select id="selectDutyCount" parameterType="java.util.Map" resultType="java.util.Map">
+		 select du.user_name as "1",cd.chidaocishu as "2",zb.zhibancishu as "3",gzb.* from duty_users du 
+		  left join  (select user_id,count(*) chidaocishu from ( select a.user_id ,a.shift_id,a.succession_time,b.FINAL_SUCCESSION_TIME
+		  from duty_succession_shift_user a, duty_succession_shift b
+		 where a.shift_id = b.shift_id
+		   and b.DUTY_CONFIG_ID = #{dutyConfigId}
+		   and b.duty_time &gt;= to_date( #{beginTime,jdbcType=VARCHAR}, 'yyyy-mm-dd')
+		   and b.duty_time &lt;= to_date( #{endTime,jdbcType=VARCHAR}, 'yyyy-mm-dd')
+		   and  a.succession_time > b.FINAL_SUCCESSION_TIME
+		  ) group by user_id )  cd
+		  on du.user_id = cd.user_id
+		   left join   (select a.user_id ,count(*) zhibancishu
+		  from duty_succession_shift_user a, duty_succession_shift b
+		 where a.shift_id = b.shift_id
+		   and b.DUTY_CONFIG_ID = #{dutyConfigId}
+		   and b.duty_time &gt;= to_date(#{beginTime,jdbcType=VARCHAR}, 'yyyy-mm-dd')
+		   and b.duty_time &lt;= to_date(#{endTime,jdbcType=VARCHAR}, 'yyyy-mm-dd')
+		 group by a.user_id ) zb
+		  on du.user_id = zb.user_id
+		  left join   (select * from ( select a.user_id ,c.duty_flight_name
+		  from duty_succession_shift_user a, duty_succession_shift b ,duty_flight_config c
+		 where a.shift_id = b.shift_id
+		   and b.duty_flight_id = c.duty_flight_id
+		   and b.duty_time  &gt;= to_date(#{beginTime,jdbcType=VARCHAR}, 'yyyy-mm-dd')
+		   and b.duty_time  &lt;= to_date(#{endTime,jdbcType=VARCHAR}, 'yyyy-mm-dd')
+		   <if test="userid != '' and userid !=null">
+				AND  a.user_id  = #{userid,jdbcType=VARCHAR}
+		  </if>
+		  ) 
+		  pivot(count(*) for duty_flight_name in(${pivotContion})))  gzb
+		  on du.user_id = gzb.user_id
+		  where du.duty_config_id = #{dutyConfigId}
+		  <if test="userid != '' and userid !=null">
+				AND  du.user_id  = #{userid,jdbcType=VARCHAR}
+		  </if>
+		  order by du.user_id
+	</select>
+	
+	
+	<insert id="insert" parameterType="com.boco.eoms.successionShift.model.SuccessionShiftModel">
+	   <selectKey resultType="java.lang.Integer" keyProperty="SHIFT_ID" order="BEFORE">
+    	SELECT DUTY_SUCCESSION_SHIFT_SEQ.NEXTVAL FROM DUAL
+    	</selectKey>
+		insert into DUTY_SUCCESSION_SHIFT (SHIFT_ID, DUTY_CONFIG_ID, DUTY_FLIGHT_ID, 
+			DUTY_TIME, NOW_DUTY_USERID, LAST_DUTY_USERID, 
+			NEXT_DUTY_USERID, SUCCESSION_USERID, SHIFT_USERID, 
+			SUCCESSION_TIME, SHIFT_TIME, SUCCESSION_IF, 
+			SHIFT_IF, FIRST_TIME,LAST_SHIFT_ID,NOTE)
+		values (#{SHIFT_ID,jdbcType=INTEGER}, #{DUTY_CONFIG_ID,jdbcType=INTEGER}, #{DUTY_FLIGHT_ID,jdbcType=INTEGER}, 
+			#{DUTY_TIME,jdbcType=TIMESTAMP}, #{NOW_DUTY_USERID,jdbcType=VARCHAR}, #{LAST_DUTY_USERID,jdbcType=VARCHAR}, 
+			#{NEXT_DUTY_USERID,jdbcType=VARCHAR}, #{SUCCESSION_USERID,jdbcType=VARCHAR}, #{SHIFT_USERID,jdbcType=VARCHAR}, 
+			#{SUCCESSION_TIME,jdbcType=TIMESTAMP}, 
+			#{SHIFT_TIME,jdbcType=VARCHAR},#{SUCCESSION_IF,jdbcType=INTEGER}, 
+			#{SHIFT_IF,jdbcType=INTEGER}, #{FIRST_TIME,jdbcType=TIMESTAMP},#{LAST_SHIFT_ID,jdbcType=INTEGER},
+			#{NOTE,jdbcType=VARCHAR}
+			)
+	</insert>
+	<insert id="insertSelective" parameterType="com.boco.eoms.successionShift.model.SuccessionShiftModel">
+	
+	<selectKey resultType="java.lang.Integer" keyProperty="SHIFT_ID" order="BEFORE">
+    	SELECT DUTY_SUCCESSION_SHIFT_SEQ.NEXTVAL FROM DUAL
+    	</selectKey>
+    	
+		insert into DUTY_SUCCESSION_SHIFT
+		<trim prefix="(" suffix=")" suffixOverrides=",">
+			<if test="SHIFT_ID != null">
+				SHIFT_ID,
+			</if>
+			<if test="DUTY_CONFIG_ID != null">
+				DUTY_CONFIG_ID,
+			</if>
+			<if test="DUTY_FLIGHT_ID != null">
+				DUTY_FLIGHT_ID,
+			</if>
+			<if test="DUTY_TIME != null">
+				DUTY_TIME,
+			</if>
+			<if test="NOW_DUTY_USERID != null">
+				NOW_DUTY_USERID,
+			</if>
+			<if test="LAST_DUTY_USERID != null">
+				LAST_DUTY_USERID,
+			</if>
+			<if test="NEXT_DUTY_USERID != null">
+				NEXT_DUTY_USERID,
+			</if>
+			<if test="SUCCESSION_USERID != null">
+				SUCCESSION_USERID,
+			</if>
+			<if test="SHIFT_USERID != null">
+				SHIFT_USERID,
+			</if>
+			<if test="SUCCESSION_TIME != null">
+				SUCCESSION_TIME,
+			</if>
+			<if test="SHIFT_TIME != null">
+				SHIFT_TIME,
+			</if>
+			<if test="SUCCESSION_IF != null">
+				SUCCESSION_IF,
+			</if>
+			<if test="SHIFT_IF != null">
+				SHIFT_IF,
+			</if>
+			<if test="FIRST_TIME != null">
+				FIRST_TIME,
+			</if>
+			<if test="LAST_SHIFT_ID != null">
+				LAST_SHIFT_ID,
+			</if>
+			<if test="NOTE != null">
+				NOTE,
+			</if>
+			<if test="FINAL_SUCCESSION_TIME != null">
+				FINAL_SUCCESSION_TIME,
+			</if>
+			<if test="FINAL_SHIFT_TIME != null">
+				FINAL_SHIFT_TIME,
+			</if>
+		</trim>
+		<trim prefix="values (" suffix=")" suffixOverrides=",">
+			<if test="SHIFT_ID != null">
+				#{SHIFT_ID,jdbcType=INTEGER},
+			</if>
+			<if test="DUTY_CONFIG_ID != null">
+				#{DUTY_CONFIG_ID,jdbcType=INTEGER},
+			</if>
+			<if test="DUTY_FLIGHT_ID != null">
+				#{DUTY_FLIGHT_ID,jdbcType=INTEGER},
+			</if>
+			<if test="DUTY_TIME != null">
+				#{DUTY_TIME,jdbcType=TIMESTAMP},
+			</if>
+			<if test="NOW_DUTY_USERID != null">
+				#{NOW_DUTY_USERID,jdbcType=VARCHAR},
+			</if>
+			<if test="LAST_DUTY_USERID != null">
+				#{LAST_DUTY_USERID,jdbcType=VARCHAR},
+			</if>
+			<if test="NEXT_DUTY_USERID != null">
+				#{NEXT_DUTY_USERID,jdbcType=VARCHAR},
+			</if>
+			<if test="SUCCESSION_USERID != null">
+				#{SUCCESSION_USERID,jdbcType=VARCHAR},
+			</if>
+			<if test="SHIFT_USERID != null">
+				#{SHIFT_USERID,jdbcType=VARCHAR},
+			</if>
+			<if test="SUCCESSION_TIME != null">
+				#{SUCCESSION_TIME,jdbcType=TIMESTAMP},
+			</if>
+			<if test="SHIFT_TIME != null">
+				#{SHIFT_TIME,jdbcType=TIMESTAMP},
+			</if>
+			<if test="SUCCESSION_IF != null">
+				#{SUCCESSION_IF,jdbcType=INTEGER},
+			</if>
+			<if test="SHIFT_IF != null">
+				#{SHIFT_IF,jdbcType=INTEGER},
+			</if>
+			<if test="FIRST_TIME != null">
+				#{FIRST_TIME,jdbcType=TIMESTAMP},
+			</if>
+			<if test="LAST_SHIFT_ID != null">
+				#{LAST_SHIFT_ID,jdbcType=INTEGER},
+			</if>
+			<if test="NOTE != null">
+				#{NOTE,jdbcType=VARCHAR},
+			</if>
+			<if test="FINAL_SUCCESSION_TIME != null">
+				#{FINAL_SUCCESSION_TIME,jdbcType=TIMESTAMP},
+			</if>
+			<if test="FINAL_SHIFT_TIME != null">
+				#{FINAL_SHIFT_TIME,jdbcType=TIMESTAMP},
+			</if>
+		</trim>
+	</insert>
+	<update id="updateByPrimaryKey" parameterType="com.boco.eoms.successionShift.model.SuccessionShiftModel">
+		update DUTY_SUCCESSION_SHIFT
+		set DUTY_CONFIG_ID = #{DUTY_CONFIG_ID,jdbcType=INTEGER},
+			DUTY_FLIGHT_ID = #{DUTY_FLIGHT_ID,jdbcType=INTEGER},
+			DUTY_TIME = #{DUTY_TIME,jdbcType=TIMESTAMP},
+			NOW_DUTY_USERID = #{NOW_DUTY_USERID,jdbcType=VARCHAR},
+			LAST_DUTY_USERID = #{LAST_DUTY_USERID,jdbcType=VARCHAR},
+			NEXT_DUTY_USERID = #{NEXT_DUTY_USERID,jdbcType=VARCHAR},
+			SUCCESSION_USERID = #{SUCCESSION_USERID,jdbcType=VARCHAR},
+			SHIFT_USERID = #{SHIFT_USERID,jdbcType=VARCHAR},
+			SUCCESSION_TIME =#{SUCCESSION_TIME,jdbcType=TIMESTAMP},
+			SHIFT_TIME = #{SHIFT_TIME,jdbcType=TIMESTAMP},
+			SUCCESSION_IF = #{SUCCESSION_IF,jdbcType=INTEGER},
+			SHIFT_IF = #{SHIFT_IF,jdbcType=INTEGER},
+			FIRST_TIME = #{FIRST_TIME,jdbcType=TIMESTAMP},
+			LAST_SHIFT_ID = #{LAST_SHIFT_ID,jdbcType=INTEGER},
+			NOTE = #{NOTE,jdbcType=VARCHAR},
+			FINAL_SUCCESSION_TIME = #{FINAL_SUCCESSION_TIME,jdbcType=TIMESTAMP},
+			FINAL_SHIFT_TIME = #{FINAL_SHIFT_TIME,jdbcType=TIMESTAMP}
+		where SHIFT_ID = #{SHIFT_ID,jdbcType=INTEGER}
+	</update>
+	<update id="updateByPrimaryKeySelective" parameterType="com.boco.eoms.successionShift.model.SuccessionShiftModel">
+		update DUTY_SUCCESSION_SHIFT
+		<set>
+			<if test="DUTY_CONFIG_ID != null">
+				DUTY_CONFIG_ID = #{DUTY_CONFIG_ID,jdbcType=INTEGER},
+			</if>
+			<if test="DUTY_FLIGHT_ID != null">
+				DUTY_FLIGHT_ID = #{DUTY_FLIGHT_ID,jdbcType=INTEGER},
+			</if>
+			<if test="DUTY_TIME != null">
+				DUTY_TIME = #{DUTY_TIME,jdbcType=TIMESTAMP},
+			</if>
+			<if test="NOW_DUTY_USERID != null">
+				NOW_DUTY_USERID = #{NOW_DUTY_USERID,jdbcType=VARCHAR},
+			</if>
+			<if test="LAST_DUTY_USERID != null">
+				LAST_DUTY_USERID = #{LAST_DUTY_USERID,jdbcType=VARCHAR},
+			</if>
+			<if test="NEXT_DUTY_USERID != null">
+				NEXT_DUTY_USERID = #{NEXT_DUTY_USERID,jdbcType=VARCHAR},
+			</if>
+			<if test="SUCCESSION_USERID != null">
+				SUCCESSION_USERID = #{SUCCESSION_USERID,jdbcType=VARCHAR},
+			</if>
+			<if test="SHIFT_USERID != null">
+				SHIFT_USERID = #{SHIFT_USERID,jdbcType=VARCHAR},
+			</if>
+			<if test="SUCCESSION_TIME != null">
+				SUCCESSION_TIME = #{SUCCESSION_TIME,jdbcType=TIMESTAMP},
+			</if>
+			<if test="SHIFT_TIME != null">
+				SHIFT_TIME = #{SHIFT_TIME,jdbcType=TIMESTAMP},
+			</if>
+			<if test="SUCCESSION_IF != null">
+				SUCCESSION_IF = #{SUCCESSION_IF,jdbcType=INTEGER},
+			</if>
+			<if test="SHIFT_IF != null">
+				SHIFT_IF = #{SHIFT_IF,jdbcType=INTEGER},
+			</if>
+			<if test="FIRST_TIME != null">
+				FIRST_TIME = #{FIRST_TIME,jdbcType=TIMESTAMP},
+			</if>
+			<if test="LAST_SHIFT_ID != null">
+				LAST_SHIFT_ID = #{LAST_SHIFT_ID,jdbcType=INTEGER},
+			</if>
+			<if test="NOTE != null">
+				NOTE = #{NOTE,jdbcType=VARCHAR},
+			</if>
+			<if test="FINAL_SUCCESSION_TIME != null">
+				FINAL_SUCCESSION_TIME = #{FINAL_SUCCESSION_TIME,jdbcType=TIMESTAMP}
+			</if>
+			<if test="FINAL_SHIFT_TIME != null">
+				FINAL_SHIFT_TIME = #{FINAL_SHIFT_TIME,jdbcType=TIMESTAMP}
+			</if>
+		</set>
+		where SHIFT_ID = #{SHIFT_ID,jdbcType=INTEGER}
+	</update>
+	<delete id="deleteByPrimaryKey" parameterType="int">
+		delete from DUTY_SUCCESSION_SHIFT
+		where SHIFT_ID = #{SHIFT_ID,jdbcType=INTEGER}
+	</delete>
+	<select id="selectByPrimaryKey" parameterType="int" resultMap="BaseResultMap">
+		select 
+		<include refid="Base_Column_List" />
+		from DUTY_SUCCESSION_SHIFT
+		where SHIFT_ID = #{SHIFT_ID,jdbcType=INTEGER}
+	</select>
+	
+	
+	<insert id="insertRemindByBatch" parameterType="java.util.List">
+        insert into p_remind_user (id,user_id,remind_content,remind_time,deleted,model_type)
+        select  A.* from (
+         <foreach collection="list" item="item" index="index" separator="union all">
+	      select #{item.id,jdbcType=VARCHAR}, #{item.userid,jdbcType=VARCHAR}, 
+	      #{item.remindContent,jdbcType=VARCHAR}, #{item.remindTime,jdbcType=TIMESTAMP}, 
+	      #{item.deleted,jdbcType=INTEGER}, #{item.modelType,jdbcType=VARCHAR}
+	       FROM DUAL
+	    </foreach>
+	    ) A
+    </insert>
+    
+	<insert id="insertSmsMonitor" parameterType="java.util.List">
+        insert into SMS_MONITOR (id,buizid,mobile,dispatchtime,content,deleted)
+        select  A.* from (
+         <foreach collection="list" item="item" index="index" separator="union all">
+	      select #{item.id,jdbcType=VARCHAR}, #{item.buiz_id,jdbcType=VARCHAR}, 
+	      #{item.mobile,jdbcType=VARCHAR}, #{item.dispatch_time,jdbcType=TIMESTAMP}, 
+	      #{item.content,jdbcType=VARCHAR}, #{item.deleted,jdbcType=VARCHAR}
+	       FROM DUAL
+	    </foreach>
+	    ) A
+    </insert>
+    
+   <update id="deleteSmsMonitor" parameterType="String">
+		update SMS_MONITOR
+		set DELETED = '1'
+		where BUIZID = #{buiz_id,jdbcType=VARCHAR}
+	</update>
+</mapper>

@@ -1,0 +1,130 @@
+<!DOCTYPE web-app PUBLIC
+ "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN"
+ "http://java.sun.com/dtd/web-app_2_3.dtd" >
+
+<web-app id="WebApp_1500512988891">
+  <display-name>Archetype Created Web Application</display-name>
+  <context-param>
+		<param-name>contextConfigLocation</param-name>
+		<param-value>classpath:spring/spring.xml,
+			classpath:spring/spring-mybatis.xml,
+			classpath:cxf/spring-cxf-service.xml</param-value>
+	</context-param>
+	<filter>
+		<filter-name>encodingFilter</filter-name>
+		<description>字符集过滤器</description>
+		<filter-class>org.springframework.web.filter.CharacterEncodingFilter</filter-class>
+		<init-param>
+			<param-name>encoding</param-name>
+			<param-value>UTF-8</param-value>
+			<description>字符集编码</description>
+		</init-param>
+	</filter>
+	<filter-mapping>
+		<filter-name>encodingFilter</filter-name>
+		<url-pattern>/*</url-pattern>
+	</filter-mapping>
+	<!-- ember跨域请求filter -->
+	<filter>
+		<filter-name>corsFilter</filter-name>
+		<description>ember跨域请求filter</description>
+		<filter-class>com.boco.eoms.filter.CorsFilter</filter-class>
+	</filter>
+	<filter-mapping>
+		<filter-name>corsFilter</filter-name>
+		<url-pattern>/*</url-pattern>
+	</filter-mapping>
+	<listener>
+		<!-- spring监听器</description> -->
+		<listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+	</listener>
+	<!-- 防止spring内存溢出监听器 -->
+	<listener>
+		<listener-class>org.springframework.web.util.IntrospectorCleanupListener</listener-class>
+	</listener>
+	<!-- spring mvc servlet -->
+	<servlet>
+		<servlet-name>springMvc</servlet-name>
+		<description>spring mvc servlet</description>
+		<servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+		<init-param>
+			<param-name>contextConfigLocation</param-name>
+			<param-value>classpath:spring/spring-mvc.xml</param-value>
+			<description>spring mvc 配置文件</description>
+		</init-param>
+		<load-on-startup>1</load-on-startup>
+	</servlet>
+	<!-- druid -->
+	<servlet>
+		<servlet-name>DruidStatView</servlet-name>
+		<servlet-class>com.alibaba.druid.support.http.StatViewServlet</servlet-class>
+	</servlet>
+	<servlet>
+		<!-- cxf -->
+		<servlet-name>CXFServlet</servlet-name>
+		<servlet-class>org.apache.cxf.transport.servlet.CXFServlet</servlet-class>
+		<load-on-startup>1</load-on-startup>
+	</servlet>
+
+	<servlet-mapping>
+		<servlet-name>springMvc</servlet-name>
+		<url-pattern>/</url-pattern>
+	</servlet-mapping>
+
+	<servlet-mapping>
+		<servlet-name>DruidStatView</servlet-name>
+		<url-pattern>/druid/*</url-pattern>
+	</servlet-mapping>
+
+
+	<servlet-mapping>
+		<servlet-name>CXFServlet</servlet-name>
+		<url-pattern>/webservice/*</url-pattern>
+	</servlet-mapping>
+	
+	<servlet-mapping>
+	<servlet-name>default</servlet-name>
+	<url-pattern>*.js</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+	<servlet-name>default</servlet-name>
+	<url-pattern>*.css</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+	
+	<servlet-name>default</servlet-name>
+	<url-pattern>*.eot</url-pattern>
+	</servlet-mapping>
+	
+	<servlet-mapping>
+	<servlet-name>default</servlet-name>
+	<url-pattern>*.svg</url-pattern>
+	</servlet-mapping>
+	
+	<servlet-mapping>
+	<servlet-name>default</servlet-name>
+	<url-pattern>*.woff</url-pattern>
+	</servlet-mapping>
+	
+	<servlet-mapping>
+	<servlet-name>default</servlet-name>
+	<url-pattern>*.ttf</url-pattern>
+	</servlet-mapping>
+	
+	<servlet-mapping>
+	<servlet-name>default</servlet-name>
+	<url-pattern>*.woff2</url-pattern>
+	</servlet-mapping>
+	
+	<servlet-mapping>
+	<servlet-name>default</servlet-name>
+	<url-pattern>*.map</url-pattern>
+	</servlet-mapping>
+	<!-- 配置session超时时间，单位分钟 -->
+	<session-config>
+		<session-timeout>60</session-timeout>
+	</session-config>
+	<welcome-file-list>
+		<welcome-file>/index.jsp</welcome-file>
+	</welcome-file-list>
+</web-app>

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-config.dtd">
+
+<mapper namespace="com.boco.eoms.base.dao.AuthorityMapper">
+
+	<!-- 根据接口返回权限数据查询该用户所能访问菜单 -->
+	<select id="getMenuByAuthority"  parameterType="java.util.Map" resultType="java.util.HashMap">
+		select * from taw_system_priv where ${condition} and deleted = '0' order by orderid asc
+	</select>
+	
+	<select id="getMenuByIteration"  parameterType="java.util.Map" resultType="java.util.HashMap">
+		select distinct p.* from TAW_SYSTEM_PRIV p 
+		start with p.MENUID in (select MENUID from TAW_SYSTEM_PRIV where OPERID in (${operIds}) and PARENTOPERID=${parentOperId} and DELETED = '0')
+		connect by prior p.PARENTMENUID = p.MENUID and p.PARENTMENUID !=-1 and p.DELETED='0' order by p.orderid asc
+	</select>
+	
+	<!-- 根据条件获取user信息 -->
+	<select id="getUserByCndition"  parameterType="java.util.Map" resultType="java.util.HashMap">
+		select * from nrmdb.tau_user where ${condition} 
+	</select>
+	
+	<!-- 根据条件获取dept信息 -->
+	<select id="getDeptByCndition"  parameterType="java.util.Map" resultType="java.util.HashMap">
+		select * from nrmdb.tai_deptinfo where ${condition} 
+	</select>
+	
+		<!-- 获取所有用户组 -->
+	<select id="getAllGroup"  resultType="java.util.HashMap">
+		select group_id as "groupId",group_name as "groupName" from nrmdb.tau_group where deleted_time is null
+	</select>
+	
+</mapper>

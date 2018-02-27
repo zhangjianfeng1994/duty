@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-config.dtd">
+<!-- 用户UserMapper 配置文件 -->
+<mapper namespace="com.boco.eoms.system.user.dao.UserMapper">
+	
+	<!-- 根据userid查询用户信息 -->
+	<select id="getUserNameByUserId"  parameterType="string" resultType="string">
+		select user_name as "userName" from nrmdb.tau_user where user_id=#{userId}
+	</select>
+	
+	<!-- 根据mainid查询user -->
+	<select id="getUserIdByMainId"  parameterType="java.util.Map" resultType="java.util.HashMap">
+		select distinct operateuserid from base_link where mainid=#{mainId}
+	</select>
+	
+	<!-- 根据GroupId查询userId -->
+	<select id="getUserByGroupId"  parameterType="string" resultType="java.util.HashMap">
+		select * from nrmdb.tau_user_group g, nrmdb.tau_user u where u.user_id = g.user_id and g.group_id=#{groupId}
+	</select>
+	
+	<!-- 根据用户id,大角色id,查询用户组id和用户组name -->
+	<select id="getGroupByUserIdAndRoleId"  parameterType="string" resultType="java.util.HashMap">
+		select group1.group_name as "groupName",group1.group_id as "groupId"
+					 from nrmdb.tau_role role1,
+							   nrmdb.tau_user_role user1,
+							   nrmdb.tau_group group1,
+							   nrmdb.tau_user_group user2
+		where role1.role_id=user1.role_id 
+					and  user1.user_id=group1.group_id
+					and role1.workflow_role_id=#{roleId}
+					and user1.user_source_type=2 
+					and group1.group_id = user2.group_id 
+					and user2.user_id=#{userId}
+	</select>
+	
+	<!-- 根据用户组查询用户组name -->
+	<select id="getGroupNameByGroupId"  parameterType="string" resultType="string">
+		select group_name as "gruopName" from nrmdb.tau_group where group_id=#{groupId}
+	</select>
+	
+	<!-- 根据流程角色id查询角色id -->
+	<select id="getRoleIdByWorkFlow"  parameterType="string" resultType="string">
+		select role_id as "roleId" from nrmdb.tau_role where workflow_role_id=#{workflow_role_id}
+	</select>
+	
+</mapper>

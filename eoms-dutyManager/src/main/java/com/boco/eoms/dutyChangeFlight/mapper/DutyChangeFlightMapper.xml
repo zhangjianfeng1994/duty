@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.boco.eoms.dutyChangeFlight.dao.DutyChangeFlightMapper">
+	<resultMap id="BaseResultMap" type="com.boco.eoms.dutyChangeFlight.model.DutyChangeFlight" >
+	    <id column="ID" property="id" jdbcType="INTEGER"/>
+	    <result column="CREATE_FLIGHT_ID" property="createFlightId" jdbcType="INTEGER" />
+	    <result column="CREATE_USER" property="createUser" jdbcType="VARCHAR" />
+	    <result column="DEAL_USER" property="dealUser" jdbcType="VARCHAR" />
+	    <result column="AUDIT_USER" property="auditUser" jdbcType="VARCHAR" />
+	    <result column="CREATE_DUTY_TIME" property="createDutyTime" jdbcType="TIMESTAMP" />
+	    <result column="APPLY_RESULT" property="applyResult" jdbcType="VARCHAR" />
+	    <result column="STATUS" property="status" jdbcType="VARCHAR" />
+	    <result column="SHEET_STATUS" property="sheetStatus" jdbcType="INTEGER" />
+	    <result column="DEAL_FLIGHT_ID" property="dealFlightId" jdbcType="INTEGER" />
+	    <result column="DEAL_DUTY_TIME" property="dealDutyTime" jdbcType="TIMESTAMP" />
+	    <result column="CREATE_TIME" property="createTime" jdbcType="TIMESTAMP" />
+  	</resultMap>
+  	<!-- 查询申请人班次开始时间 -->
+	<select id="searchCreateDutyStartTime" parameterType="string" resultType="java.util.HashMap">
+		SELECT
+			ROWNUM ID,
+			DFC.DUTY_FLIGHT_ID DICTID,
+			DFC.DUTY_FLIGHT_BEGINTIME DICTNAME,
+			DFC.DUTY_CONFIG_ID
+		FROM
+			DUTY_FLIGHT_CONFIG DFC,
+			DUTY_SCHEDULING_USERS DSU
+		WHERE
+			DFC.DUTY_FLIGHT_ID = DSU.DUTY_FLIGHT_ID
+			AND DFC.CHANGE_IF = 0
+			AND DSU.USERID = #{userId,jdbcType=VARCHAR}
+			AND DSU.DUTY_TIME = TO_DATE(#{dutyFlightBeginTime,jdbcType=VARCHAR}, 'YYYY-MM-DD')
+	</select>
+	<!-- 查询接收人班次开始时间 -->
+	<select id="searchDealDutyStartTime" parameterType="string" resultType="java.util.HashMap">
+		SELECT DISTINCT
+			DFC.DUTY_FLIGHT_ID ID,
+			DFC.DUTY_FLIGHT_ID DICTID,
+			DFC.DUTY_FLIGHT_BEGINTIME DICTNAME
+		FROM
+			DUTY_SCHEDULING_USERS DSU,
+			DUTY_FLIGHT_CONFIG DFC
+		WHERE
+			DSU.DUTY_FLIGHT_ID = DFC.DUTY_FLIGHT_ID
+		AND DFC.DUTY_CONFIG_ID = #{dutyConfigId,jdbcType=VARCHAR}
+		AND DSU.DUTY_TIME = TO_DATE(#{dutyFlightBeginTime,jdbcType=VARCHAR}, 'YYYY-MM-DD')
+		AND NOT EXISTS(
+			SELECT
+				DUTY_FLIGHT_ID
+			FROM
+				DUTY_SCHEDULING_USERS
+			WHERE
+				USERID = #{userId,jdbcType=VARCHAR}
+			AND DSU.DUTY_FLIGHT_ID = DUTY_FLIGHT_ID
+			AND DUTY_TIME = TO_DATE(#{dutyFlightBeginTime,jdbcType=VARCHAR}, 'YYYY-MM-DD')
+		)
+	</select>
+	<!-- 查询班次下的人 -->
+	<select id="searchDutyUser" parameterType="string" resultType="java.util.HashMap">
+		SELECT
+			ROWNUM ID,
+			USERID DICTID,
+			USERNAME DICTNAME
+		FROM
+			duty_scheduling_users
+		WHERE
+			duty_flight_id = #{dutyFlightId,jdbcType=VARCHAR}
+		AND duty_time = TO_DATE(#{dutyTime,jdbcType=VARCHAR}, 'yyyy-mm-dd')
+	</select>
+	
+	<!-- 查询换班记录列表信息 -->
+	<select id="queryDutyChangeFlightList" resultMap="BaseResultMap">
+		SELECT
+			ID,
+			CREATE_FLIGHT_ID,
+			CREATE_USER,
+			DEAL_USER,
+			AUDIT_USER,
+			CREATE_DUTY_TIME,
+			APPLY_RESULT,
+			STATUS,
+			SHEET_STATUS,
+			DEAL_FLIGHT_ID,
+			DEAL_DUTY_TIME,
+			CREATE_TIME
+		FROM
+			DUTY_CHANGE_FLIGHT
+		WHERE
+			1=1 ${condition} ORDER BY CREATE_TIME ASC
+	</select>
+	
+	<!-- 插入一条换班记录信息 -->
+	<insert id="insertDutyChangeFlight" parameterType="com.boco.eoms.dutyChangeFlight.model.DutyChangeFlight">
+        <selectKey resultType="java.lang.Integer" keyProperty="id" order="BEFORE" >
+      		SELECT DUTY_CHANGE_FLIGHT_SEQ.NEXTVAL FROM DUAL
+  		</selectKey>
+		insert into DUTY_CHANGE_FLIGHT 
+		(
+			ID,
+			CREATE_FLIGHT_ID,
+			CREATE_USER,
+			DEAL_USER,
+			CREATE_DUTY_TIME,
+			APPLY_RESULT,
+			STATUS,
+			SHEET_STATUS,
+			DEAL_FLIGHT_ID,
+			DEAL_DUTY_TIME,
+			CREATE_TIME
+		)
+		values
+		(
+			#{id,jdbcType=INTEGER},
+			#{createFlightId,jdbcType=INTEGER},
+			#{createUser,jdbcType=VARCHAR},
+			#{dealUser,jdbcType=VARCHAR},
+			#{createDutyTime,jdbcType=TIMESTAMP},
+			#{applyResult,jdbcType=VARCHAR},
+			'接收人待回复',
+			0,
+			#{dealFlightId,jdbcType=INTEGER},
+			#{dealDutyTime,jdbcType=TIMESTAMP},
+			#{createTime,jdbcType=TIMESTAMP}
+		)
+	</insert>
+	
+	<!-- 更新changeIf -->
+	<update id="updateChangeIf">
+		update DUTY_FLIGHT_CONFIG set 
+			CHANGE_IF = #{type,jdbcType=INTEGER}
+		WHERE DUTY_FLIGHT_ID IN (#{createFlightId,jdbcType=INTEGER},#{dealFlightId,jdbcType=INTEGER})
+	</update>
+	
+	<!-- 更新一条换班记录信息 -->
+	<update id="updateDutyChangeFlight" parameterType="com.boco.eoms.dutyChangeFlight.model.DutyChangeFlight">
+		update DUTY_CHANGE_FLIGHT set 
+			STATUS = #{status,jdbcType=VARCHAR},
+			SHEET_STATUS = #{sheetStatus,jdbcType=INTEGER}
+		WHERE ID = #{id,jdbcType=INTEGER}
+	</update>
+	
+	<!-- 完成换班，变更对应用户 -->
+	<update id="changeFlightUser" parameterType="com.boco.eoms.dutyChangeFlight.model.DutyChangeFlight">
+		UPDATE DUTY_SCHEDULING_USERS
+		SET USERID = #{firstUser,jdbcType=VARCHAR},
+		 USERNAME =(
+			SELECT DISTINCT
+				USER_NAME
+			FROM
+				DUTY_USERS
+			WHERE
+				USER_ID = #{firstUser,jdbcType=VARCHAR}
+		)
+		WHERE
+			DUTY_TIME = TO_DATE(#{dutyTime,jdbcType=VARCHAR}, 'YYYY-MM-DD')
+		AND DUTY_FLIGHT_ID = #{dutyFlightId,jdbcType=VARCHAR}
+		AND USERID = #{lastUser,jdbcType=VARCHAR}
+	</update>
+	
+	<!-- 查询班次开始、结束时间 -->
+	<select id="searchDutyTimeByFlightId" resultType="java.util.HashMap">
+		SELECT
+			DUTY_FLIGHT_BEGINTIME,
+			DUTY_FLIGHT_ENDTIME
+		FROM
+			DUTY_FLIGHT_CONFIG
+		WHERE
+			DUTY_FLIGHT_ID = #{dutyFlightId,jdbcType=VARCHAR}
+	</select>
+</mapper>

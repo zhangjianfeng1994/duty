@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.boco.eoms.dutyInfo.dao.DutyInfoMapper">
+	<resultMap id="BaseResultMap" type="com.boco.eoms.dutyInfo.model.DutyInfo" >
+	    <id column="DUTY_LOG_ID" property="id" jdbcType="INTEGER"/>
+	    <result column="CREATE_TIME" property="createTime" jdbcType="TIMESTAMP" />
+	    <result column="CREATE_USER" property="createUser"  jdbcType="VARCHAR" />
+	    <result column="DEAL_USER" property="dealUser" jdbcType="VARCHAR" />
+	    <result column="DEAL_TIME" property="dealTime" jdbcType="TIMESTAMP" />
+	    <result column="MAIN_STATIONS" property="mainStations" jdbcType="VARCHAR" />
+	    <result column="MAIN_SUB_CENTER" property="mainSubCenter" jdbcType="VARCHAR" />
+	    <result column="MAIN_FAULT_SUB_SYSTEM" property="mainFaultSubSystem" jdbcType="VARCHAR" />
+	    <result column="MAIN_FAULT_EQUIPMENT_TYPE" property="mainFaultEquipmentType" jdbcType="VARCHAR" />
+	    <result column="MAIN_FAULT_TYPE" property="mainFaultType" jdbcType="VARCHAR" />
+	    <result column="MAIN_FAULT_DESC" property="mainFaultDesc" jdbcType="VARCHAR" />
+	    <result column="PROCESSING_PROCEDURE" property="processingProcedure" jdbcType="VARCHAR" />
+	    <result column="RESOLVE_IF" property="resolveIf" jdbcType="INTEGER" />
+	    <result column="ATTENTION_IF" property="attentionIf" jdbcType="INTEGER" />
+	    <result column="REMAIN_IF" property="remainIf" jdbcType="INTEGER" />
+	    <result column="NOTE" property="note" jdbcType="VARCHAR" />
+  	</resultMap>
+	<!-- 查询值班记录列表信息 -->
+	<select id="queryDutyInfoList" resultMap="BaseResultMap">
+		SELECT
+			DUTY_LOG_ID,
+			CREATE_TIME,
+			CREATE_USER,
+			DEAL_USER,
+			DEAL_TIME,
+			MAIN_STATIONS,
+			MAIN_SUB_CENTER,
+			MAIN_FAULT_SUB_SYSTEM,
+			MAIN_FAULT_EQUIPMENT_TYPE,
+			MAIN_FAULT_TYPE,
+			MAIN_FAULT_DESC,
+			PROCESSING_PROCEDURE,
+			RESOLVE_IF,
+			ATTENTION_IF,
+			REMAIN_IF,
+			NOTE
+		FROM
+			DUTY_INFO
+		WHERE
+			1=1 ${condition} ORDER BY CREATE_TIME DESC
+	</select>
+	
+	<!-- 插入一条值班记录信息 -->
+	<insert id="insertDutyInfo" parameterType="com.boco.eoms.dutyInfo.model.DutyInfo">
+        <selectKey resultType="java.lang.Integer" keyProperty="id" order="BEFORE" >
+      		SELECT DUTY_INFO_SEQ.NEXTVAL FROM DUAL
+  		</selectKey>
+		insert into DUTY_INFO 
+		(
+			DUTY_LOG_ID,
+			CREATE_TIME,
+			CREATE_USER,
+			DEAL_USER,
+			DEAL_TIME,
+			MAIN_STATIONS,
+			MAIN_SUB_CENTER,
+			MAIN_FAULT_SUB_SYSTEM,
+			MAIN_FAULT_EQUIPMENT_TYPE,
+			MAIN_FAULT_TYPE,
+			MAIN_FAULT_DESC,
+			PROCESSING_PROCEDURE,
+			RESOLVE_IF,
+			ATTENTION_IF,
+			REMAIN_IF,
+			NOTE
+		)
+		values
+		(
+			#{id,jdbcType=INTEGER},
+			#{createTime,jdbcType=TIMESTAMP},
+			#{createUser,jdbcType=VARCHAR},
+			#{dealUser,jdbcType=VARCHAR},
+			#{dealTime,jdbcType=TIMESTAMP},
+			#{mainStations,jdbcType=VARCHAR},
+			#{mainSubCenter,jdbcType=VARCHAR},
+			#{mainFaultSubSystem,jdbcType=VARCHAR},
+			#{mainFaultEquipmentType,jdbcType=VARCHAR},
+			#{mainFaultType,jdbcType=VARCHAR},
+			#{mainFaultDesc,jdbcType=VARCHAR},
+			#{processingProcedure,jdbcType=VARCHAR},
+			#{resolveIf,jdbcType=INTEGER},
+			#{attentionIf,jdbcType=INTEGER},
+			#{remainIf,jdbcType=INTEGER},
+			#{note,jdbcType=VARCHAR}
+		)
+	</insert>
+	<!-- 批量更新值班记录信息是否遗留 -->
+	<update id="updateDutyInfoRemain" parameterType="java.util.Map">
+    	update  DUTY_INFO set  REMAIN_IF = #{resolveIf,jdbcType=VARCHAR} where DUTY_LOG_ID in
+	<foreach  item="item" collection="ids" index="index"  open="(" separator="," close=")"> #{item} </foreach>
+	</update>
+	<!-- 更新一条值班记录信息 -->
+	<update id="updateDutyInfo" parameterType="com.boco.eoms.dutyInfo.model.DutyInfo">
+		update DUTY_INFO set 
+			CREATE_TIME = #{createTime,jdbcType=TIMESTAMP},
+			CREATE_USER = #{createUser,jdbcType=VARCHAR},
+			DEAL_USER = #{dealUser,jdbcType=VARCHAR},
+			DEAL_TIME = #{dealTime,jdbcType=TIMESTAMP},
+			MAIN_SUB_CENTER = #{mainSubCenter,jdbcType=VARCHAR},
+			MAIN_STATIONS = #{mainStations,jdbcType=VARCHAR},
+			MAIN_FAULT_SUB_SYSTEM = #{mainFaultSubSystem,jdbcType=VARCHAR},
+			MAIN_FAULT_EQUIPMENT_TYPE = #{mainFaultEquipmentType,jdbcType=VARCHAR},
+			MAIN_FAULT_TYPE = #{mainFaultType,jdbcType=VARCHAR},
+			MAIN_FAULT_DESC = #{mainFaultDesc,jdbcType=VARCHAR},
+			PROCESSING_PROCEDURE = #{processingProcedure,jdbcType=VARCHAR},
+			RESOLVE_IF = #{resolveIf,jdbcType=INTEGER},
+			ATTENTION_IF = #{attentionIf,jdbcType=INTEGER},
+			REMAIN_IF = #{remainIf,jdbcType=INTEGER},
+			NOTE = #{note,jdbcType=VARCHAR}
+		WHERE DUTY_LOG_ID = #{id,jdbcType=INTEGER}
+	</update>
+	
+	<!-- 删除一条值班记录信息 -->
+    <delete id="deleteDutyInfo" parameterType="java.lang.Integer">  
+        delete from DUTY_INFO where DUTY_LOG_ID = #{id,jdbcType=INTEGER}
+    </delete>
+	
+</mapper>

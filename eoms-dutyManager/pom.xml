@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>com.boco.eoms</groupId>
+    <artifactId>eoms-main</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+  </parent>
+  <artifactId>eoms-dutyManager</artifactId>
+  <packaging>war</packaging>
+  <name>eoms-dutyManager Maven Webapp</name>
+  <url>http://maven.apache.org</url>
+  <dependencies>
+  	<dependency>
+  	 <groupId>com.boco.eoms</groupId>
+  	 <artifactId>eoms-commons</artifactId>
+  	 <version>${project.version}</version>
+    </dependency>
+    <dependency>
+  	 <groupId>com.boco.eoms</groupId>
+     <artifactId>eoms-api</artifactId>
+     <version>${project.version}</version>
+    </dependency>
+    <dependency>
+  	 <groupId>com.boco.eoms.base</groupId>
+     <artifactId>eoms-base</artifactId>
+     <version>${project.version}</version>
+    </dependency>
+<!--     <dependency>
+    <groupId>com.zjf</groupId>
+    <artifactId>mybatis-generator-core-adjust</artifactId>
+    <version>1.3.5</version>
+	</dependency> -->
+  </dependencies>
+  <build>
+    <finalName>eoms-dutyManager</finalName>
+    
+  </build>
+</project>

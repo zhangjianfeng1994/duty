@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.boco.eoms.dutyConfig.dao.DutyFlightConfigMapper" >
+  <resultMap id="BaseResultMap" type="com.boco.eoms.dutyConfig.model.DutyFlightConfig" >
+    <id column="DUTY_FLIGHT_ID" property="dutyFlightId" jdbcType="INTEGER" />
+    <result column="DUTY_FLIGHT_NAME" property="dutyFlightName" jdbcType="VARCHAR" />
+    <result column="DUTY_FLIGHT_BEGINTIME" property="dutyFlightBegintime" jdbcType="VARCHAR" />
+    <result column="DUTY_FLIGHT_ENDTIME" property="dutyFlightEndtime" jdbcType="VARCHAR" />
+    <result column="DUTY_CONFIG_ID" property="dutyConfigId" jdbcType="INTEGER" />
+    <result column="LAST_DUTY_FLIGHT_ID" property="lastDutyFlightId" jdbcType="INTEGER" />
+    <result column="CREATE_TIME" property="createTime" jdbcType="VARCHAR" />
+    <result column="LAST_DUTY_CONFIG_ID" property="lastDutyConfigId" jdbcType="INTEGER" />
+    <result column="DELETE_IF" property="deleteIf" jdbcType="VARCHAR" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    DUTY_FLIGHT_ID, DUTY_FLIGHT_NAME, DUTY_FLIGHT_BEGINTIME, DUTY_FLIGHT_ENDTIME, DUTY_CONFIG_ID, 
+    LAST_DUTY_FLIGHT_ID, CREATE_TIME, LAST_DUTY_CONFIG_ID
+  </sql>
+  <select id="selectMaxId" resultType="Integer" parameterType="int">
+  	select max(duty_flight_id) from DUTY_FLIGHT_CONFIG WHERE duty_config_id = #{dutyConfigId,jdbcType=INTEGER}
+  </select>
+  <select id="selectByDutyConfigId" resultMap="BaseResultMap" parameterType="int" >
+    select * from DUTY_FLIGHT_CONFIG where DUTY_CONFIG_ID = #{dutyConfigId,jdbcType=INTEGER} and DELETE_IF='0'  order by DUTY_FLIGHT_ID asc
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="int" >
+    select 
+    <include refid="Base_Column_List" />
+    from DUTY_FLIGHT_CONFIG
+    where DUTY_FLIGHT_ID = #{dutyFlightId,jdbcType=INTEGER}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="int" >
+    delete from DUTY_FLIGHT_CONFIG
+    where DUTY_FLIGHT_ID = #{dutyFlightId,jdbcType=INTEGER} and DELETE_IF='0'
+  </delete>
+  <delete id="deleteByDutyId" parameterType="int" >
+    update DUTY_FLIGHT_CONFIG set DELETE_IF = '1'
+    where DUTY_CONFIG_ID = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.boco.eoms.dutyConfig.model.DutyFlightConfig" >
+  <selectKey resultType="java.lang.Integer" keyProperty="dutyFlightId" order="BEFORE" >
+      SELECT duty_flight_config_seq.NEXTVAL FROM DUAL
+  </selectKey>
+    insert into DUTY_FLIGHT_CONFIG (DUTY_FLIGHT_ID, DUTY_FLIGHT_NAME, DUTY_FLIGHT_BEGINTIME, 
+      DUTY_FLIGHT_ENDTIME, DUTY_CONFIG_ID, LAST_DUTY_FLIGHT_ID, 
+      CREATE_TIME, LAST_DUTY_CONFIG_ID,DELETE_IF)
+    values (#{dutyFlightId,jdbcType=INTEGER}, #{dutyFlightName,jdbcType=VARCHAR}, #{dutyFlightBegintime,jdbcType=VARCHAR}, 
+      #{dutyFlightEndtime,jdbcType=VARCHAR}, #{dutyConfigId,jdbcType=INTEGER}, #{lastDutyFlightId,jdbcType=INTEGER}, 
+      #{createTime,jdbcType=VARCHAR}, #{lastDutyConfigId,jdbcType=INTEGER},'0')
+  </insert>
+  <insert id="insertSelective" parameterType="com.boco.eoms.dutyConfig.model.DutyFlightConfig" >
+    insert into DUTY_FLIGHT_CONFIG
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="dutyFlightId != null" >
+        DUTY_FLIGHT_ID,
+      </if>
+      <if test="dutyFlightName != null" >
+        DUTY_FLIGHT_NAME,
+      </if>
+      <if test="dutyFlightBegintime != null" >
+        DUTY_FLIGHT_BEGINTIME,
+      </if>
+      <if test="dutyFlightEndtime != null" >
+        DUTY_FLIGHT_ENDTIME,
+      </if>
+      <if test="dutyConfigId != null" >
+        DUTY_CONFIG_ID,
+      </if>
+      <if test="lastDutyFlightId != null" >
+        LAST_DUTY_FLIGHT_ID,
+      </if>
+      <if test="createTime != null" >
+        CREATE_TIME,
+      </if>
+      <if test="lastDutyConfigId != null" >
+        LAST_DUTY_CONFIG_ID,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="dutyFlightId != null" >
+        #{dutyFlightId,jdbcType=DECIMAL},
+      </if>
+      <if test="dutyFlightName != null" >
+        #{dutyFlightName,jdbcType=VARCHAR},
+      </if>
+      <if test="dutyFlightBegintime != null" >
+        #{dutyFlightBegintime,jdbcType=VARCHAR},
+      </if>
+      <if test="dutyFlightEndtime != null" >
+        #{dutyFlightEndtime,jdbcType=VARCHAR},
+      </if>
+      <if test="dutyConfigId != null" >
+        #{dutyConfigId,jdbcType=DECIMAL},
+      </if>
+      <if test="lastDutyFlightId != null" >
+        #{lastDutyFlightId,jdbcType=DECIMAL},
+      </if>
+      <if test="createTime != null" >
+        #{createTime,jdbcType=VARCHAR},
+      </if>
+      <if test="lastDutyConfigId != null" >
+        #{lastDutyConfigId,jdbcType=DECIMAL},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.boco.eoms.dutyConfig.model.DutyFlightConfig" >
+    update DUTY_FLIGHT_CONFIG
+    <set >
+      <if test="dutyFlightName != null" >
+        DUTY_FLIGHT_NAME = #{dutyFlightName,jdbcType=VARCHAR},
+      </if>
+      <if test="dutyFlightBegintime != null" >
+        DUTY_FLIGHT_BEGINTIME = #{dutyFlightBegintime,jdbcType=VARCHAR},
+      </if>
+      <if test="dutyFlightEndtime != null" >
+        DUTY_FLIGHT_ENDTIME = #{dutyFlightEndtime,jdbcType=VARCHAR},
+      </if>
+      <if test="dutyConfigId != null" >
+        DUTY_CONFIG_ID = #{dutyConfigId,jdbcType=DECIMAL},
+      </if>
+      <if test="lastDutyFlightId != null" >
+        LAST_DUTY_FLIGHT_ID = #{lastDutyFlightId,jdbcType=DECIMAL},
+      </if>
+      <if test="createTime != null" >
+        CREATE_TIME = #{createTime,jdbcType=VARCHAR},
+      </if>
+      <if test="lastDutyConfigId != null" >
+        LAST_DUTY_CONFIG_ID = #{lastDutyConfigId,jdbcType=DECIMAL},
+      </if>
+    </set>
+    where DUTY_FLIGHT_ID = #{dutyFlightId,jdbcType=DECIMAL}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.boco.eoms.dutyConfig.model.DutyFlightConfig" >
+    update DUTY_FLIGHT_CONFIG
+    set DUTY_FLIGHT_NAME = #{dutyFlightName,jdbcType=VARCHAR},
+      DUTY_FLIGHT_BEGINTIME = #{dutyFlightBegintime,jdbcType=VARCHAR},
+      DUTY_FLIGHT_ENDTIME = #{dutyFlightEndtime,jdbcType=VARCHAR},
+      CREATE_TIME = #{createTime,jdbcType=VARCHAR}
+    where DUTY_FLIGHT_ID = #{dutyFlightId,jdbcType=INTEGER}
+  </update>
+  <sql id="MysqlDialectSuffix" >
+    <if test="pageHelper != null" >
+      <![CDATA[ limit #{pageHelper.begin}, #{pageHelper.length}]]>
+    </if>
+  </sql>
+  <insert id="insertBatch" parameterType="com.boco.eoms.dutyConfig.model.DutyFlightConfig" >
+    insert into DUTY_FLIGHT_CONFIG
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      DUTY_FLIGHT_ID,DUTY_FLIGHT_NAME,DUTY_FLIGHT_BEGINTIME,DUTY_FLIGHT_ENDTIME,DUTY_CONFIG_ID,LAST_DUTY_FLIGHT_ID,CREATE_TIME,LAST_DUTY_CONFIG_ID,
+    </trim>
+    values
+    <foreach collection="list" index="index" item="item" separator="," >
+      (
+      <trim suffixOverrides="," >
+        #{item.dutyFlightId,jdbcType=DECIMAL},#{item.dutyFlightName,jdbcType=VARCHAR},#{item.dutyFlightBegintime,jdbcType=VARCHAR},#{item.dutyFlightEndtime,jdbcType=VARCHAR},#{item.dutyConfigId,jdbcType=DECIMAL},#{item.lastDutyFlightId,jdbcType=DECIMAL},#{item.createTime,jdbcType=VARCHAR},#{item.lastDutyConfigId,jdbcType=DECIMAL},
+      </trim>
+      )
+    </foreach>
+  </insert>
+</mapper>
